@@ -609,6 +609,7 @@ export default function HomePage() {
                     onChange={(e) => setPlayerName(e.target.value)}
                     maxLength={20}
                         className="bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 rounded-2xl"
+                        autoComplete="off"
                   />
                 </div>
 
@@ -631,6 +632,7 @@ export default function HomePage() {
                       onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                       maxLength={6}
                           className="bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 rounded-2xl"
+                          autoComplete="off"
                     />
                     <SoundButton
                       onClick={() => handleJoinRoom()}

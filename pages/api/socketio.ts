@@ -1081,58 +1081,70 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       })
 
-      socket.on("disconnect", async (reason) => {
+      socket.on("disconnect", (reason) => {
         console.log(`🔌 Socket ${socket.id} disconnected:`, reason)
         
-        // Get player info from socket mapping
-        const playerInfo = socketPlayerMap.get(socket.id)
-        if (playerInfo) {
-          const { roomId, playerId } = playerInfo
-          console.log(`👤 Player ${playerId} disconnected from room ${roomId}`)
+        // Find the player and room
+        const player = socketPlayerMap.get(socket.id)
+        if (!player) {
+          console.log("❌ Player not found for disconnected socket")
+          return
+        }
+        
+        // Handle different disconnect reasons
+        if (reason === 'transport close') {
+          console.log("🔄 Transport close detected - keeping player in room for potential reconnection")
+          // Transport close usually means network issue, don't immediately remove player
+          // Update last seen but keep them in the room for a longer period
+          player.lastSeen = new Date()
           
-          try {
-            // Remove player from room
-            const { roomId: actualRoomId, wasHost, roomDeleted } = await removePlayerFromRoom(playerId, io)
-            
-            if (actualRoomId) {
-              // Update activity tracker
-              const activity = roomActivityTracker.get(actualRoomId)
-              if (activity) {
-                activity.players.delete(playerId)
-                if (activity.players.size === 0) {
-                  roomActivityTracker.delete(actualRoomId)
-                }
-              }
-              
-              if (roomDeleted) {
-                console.log(`🗑️ Room ${actualRoomId} deleted due to player disconnect`)
-                broadcastAvailableRooms(io)
-              } else {
-                const room = await getRoom(actualRoomId)
-                if (room) {
-                  if (wasHost) {
-                    console.log(`👑 Host ${playerId} disconnected from room ${actualRoomId}`)
-                    io.to(actualRoomId).emit("host-left")
-                    setTimeout(() => {
-                      io.to(actualRoomId).emit("error", { message: "Host disconnected", status: 404 })
-                    }, 500)
-                  } else {
-                    console.log(`👤 Player ${playerId} disconnected from room ${actualRoomId}`)
-                    io.to(actualRoomId).emit("room-update", { room })
-                  }
-                  broadcastAvailableRooms(io)
+          // Only remove after a longer timeout for transport close
+          setTimeout(async () => {
+            const currentPlayer = socketPlayerMap.get(socket.id)
+            if (currentPlayer) {
+              const timeSinceLastSeen = new Date().getTime() - currentPlayer.lastSeen.getTime()
+              if (timeSinceLastSeen > 30000) { // 30 seconds for transport close
+                console.log("⏰ Player timeout after transport close - removing from room")
+                try {
+                  await removePlayerFromRoom(player.playerId, io)
+                } catch (error) {
+                  console.error("❌ Error removing player after transport close:", error)
                 }
               }
             }
-          } catch (error) {
-            console.error(`❌ Error handling disconnect for player ${playerId}:`, error)
-          }
+          }, 30000)
           
-          // Remove socket-player association
-          socketPlayerMap.delete(socket.id)
+          return
+        } else if (reason === 'io server disconnect') {
+          console.log("🔄 Server initiated disconnect - removing player immediately")
+          removePlayerFromRoom(player.playerId, io).catch(error => {
+            console.error("❌ Error removing player after server disconnect:", error)
+          })
+        } else if (reason === 'io client disconnect') {
+          console.log("🔌 Client initiated disconnect - removing player immediately")
+          removePlayerFromRoom(player.playerId, io).catch(error => {
+            console.error("❌ Error removing player after client disconnect:", error)
+          })
+        } else {
+          // Other reasons - use standard timeout logic
+          console.log("🔄 Unexpected disconnect - using standard timeout")
+          player.lastSeen = new Date()
           
-          // Remove player heartbeat tracking
-          playerHeartbeats.delete(playerId)
+          // Standard timeout for other disconnect reasons
+          setTimeout(async () => {
+            const currentPlayer = socketPlayerMap.get(socket.id)
+            if (currentPlayer) {
+              const timeSinceLastSeen = new Date().getTime() - currentPlayer.lastSeen.getTime()
+              if (timeSinceLastSeen > 15000) { // 15 seconds for other reasons
+                console.log("⏰ Player timeout - removing from room")
+                try {
+                  await removePlayerFromRoom(player.playerId, io)
+                } catch (error) {
+                  console.error("❌ Error removing player after timeout:", error)
+                }
+              }
+            }
+          }, 15000)
         }
       })
 

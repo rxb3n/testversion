@@ -596,17 +596,40 @@ export default function RoomPage() {
     });
 
     newSocket.on("disconnect", (reason) => {
-      console.log(`🔌 Socket ${socket.id} disconnected:`, reason)
+      console.log(`🔌 Socket ${newSocket.id} disconnected:`, reason)
       setConnectionStatus('error')
       
-      // If we're in an active game, try to reconnect
-      if (room?.game_state === "playing" && roomId && playerId) {
-        console.log("🔄 Attempting to reconnect to active game...")
+      // Handle different disconnect reasons
+      if (reason === 'transport close') {
+        console.log("🔄 Transport close detected - attempting reconnection...")
+        // Transport close usually means network issue, try to reconnect
+        setTimeout(() => {
+          if (newSocket.disconnected) {
+            console.log("🔄 Attempting to reconnect after transport close...")
+            newSocket.connect()
+          }
+        }, 1000)
+      } else if (reason === 'io server disconnect') {
+        // Server initiated disconnect
+        console.log("🔄 Server initiated disconnect - attempting reconnection...")
         setTimeout(() => {
           if (newSocket.disconnected) {
             newSocket.connect()
           }
-        }, 1000)
+        }, 2000)
+      } else if (reason === 'io client disconnect') {
+        // Client initiated disconnect - don't auto-reconnect
+        console.log("🔌 Client initiated disconnect")
+      } else {
+        // Other reasons - try to reconnect if in active game
+        if (room?.game_state === "playing" && roomId && playerId) {
+          console.log("🔄 Unexpected disconnect during active game - attempting reconnection...")
+          setTimeout(() => {
+            if (newSocket.disconnected) {
+              newSocket.connect()
+            }
+          }, 2000)
+        }
       }
     });
 
@@ -2713,6 +2736,7 @@ export default function RoomPage() {
                               placeholder={strings.typeYourAnswer}
                               className="bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 rounded-2xl"
                               disabled={isCooperationWaiting}
+                              autoComplete="off"
                             />
                         </div>
                         )}
@@ -3063,6 +3087,7 @@ export default function RoomPage() {
                               placeholder={strings.typeYourAnswer}
                               className="bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 rounded-2xl"
                               disabled={isCooperationWaiting}
+                              autoComplete="off"
                             />
                         </div>
                         )}
@@ -3737,149 +3762,6 @@ export default function RoomPage() {
                   </CardContent>
                 </Card>
               )}
-
-              {/* Achievements Section */}
-              <Card className="bg-white/90 backdrop-blur-sm border-yellow-200 shadow-xl mb-8 rounded-3xl">
-                <CardHeader className="text-center pb-4">
-                  <CardTitle className="flex items-center justify-center gap-2 text-2xl text-yellow-800">
-                    <Sparkles className="h-6 w-6" />
-                    Achievements
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Language Diversity Achievement */}
-                    {new Set(room.players.filter(p => p.language).map(p => p.language)).size >= 3 && (
-                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl border border-purple-200">
-                        <Languages className="h-6 w-6 text-purple-600" />
-                        <div>
-                          <p className="font-semibold text-purple-800">Polyglot Party</p>
-                          <p className="text-sm text-purple-600">3+ languages used</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* High Score Achievement */}
-                    {room.game_mode !== "cooperation" && Math.max(...room.players.map(p => p.score)) >= room.target_score && (
-                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-emerald-100 to-green-100 rounded-2xl border border-emerald-200">
-                        <Target className="h-6 w-6 text-emerald-600" />
-                        <div>
-                          <p className="font-semibold text-emerald-800">Target Master</p>
-                          <p className="text-sm text-emerald-600">Reached target score</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Cooperation Achievement */}
-                    {room.game_mode === "cooperation" && (room.cooperation_score || 0) >= 20 && (
-                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl border border-blue-200">
-                        <Heart className="h-6 w-6 text-blue-600" />
-                        <div>
-                          <p className="font-semibold text-blue-800">Team Spirit</p>
-                          <p className="text-sm text-blue-600">20+ words together</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Perfect Game Achievement */}
-                    {room.game_mode === "cooperation" && room.cooperation_lives === 3 && (
-                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-100 to-amber-100 rounded-2xl border border-yellow-200">
-                        <Star className="h-6 w-6 text-yellow-600" />
-                        <div>
-                          <p className="font-semibold text-yellow-800">Perfect Run</p>
-                          <p className="text-sm text-yellow-600">No lives lost</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Speed Achievement */}
-                    {(() => {
-                      const startTime = new Date(room.created_at);
-                      const endTime = new Date(room.last_activity);
-                      const durationMs = endTime.getTime() - startTime.getTime();
-                      const durationMinutes = durationMs / 60000;
-                      return durationMinutes < 5;
-                    })() && (
-                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-red-100 to-orange-100 rounded-2xl border border-red-200">
-                        <Zap className="h-6 w-6 text-red-600" />
-                        <div>
-                          <p className="font-semibold text-red-800">Speed Demon</p>
-                          <p className="text-sm text-red-600">Completed in under 5 minutes</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Participation Achievement */}
-                    {room.players.length >= 4 && (
-                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-2xl border border-indigo-200">
-                        <Users className="h-6 w-6 text-indigo-600" />
-                        <div>
-                          <p className="font-semibold text-indigo-800">Party Time</p>
-                          <p className="text-sm text-indigo-600">4+ players joined</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Practice Mode Achievements */}
-                    {room.game_mode === "practice" && practiceWordsAnswered >= 20 && (
-                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl border border-blue-200">
-                        <BookOpen className="h-6 w-6 text-blue-600" />
-                        <div>
-                          <p className="font-semibold text-blue-800">Word Explorer</p>
-                          <p className="text-sm text-blue-600">20+ words answered</p>
-                        </div>
-                      </div>
-                    )}
-                    {room.game_mode === "practice" && practiceWordsAnswered >= 30 && (
-                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-100 to-emerald-100 rounded-2xl border border-green-200">
-                        <Zap className="h-6 w-6 text-green-600" />
-                        <div>
-                          <p className="font-semibold text-green-800">Speed Learner</p>
-                          <p className="text-sm text-green-600">30+ words answered</p>
-                        </div>
-                      </div>
-                    )}
-                    {room.game_mode === "practice" && practiceWordsAnswered >= 40 && (
-                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl border border-purple-200">
-                        <Star className="h-6 w-6 text-purple-600" />
-                        <div>
-                          <p className="font-semibold text-purple-800">Language Master</p>
-                          <p className="text-sm text-purple-600">40+ words answered</p>
-                        </div>
-                      </div>
-                    )}
-                    {room.game_mode === "practice" && practiceWordsAnswered >= 50 && (
-                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl border border-yellow-200">
-                        <Crown className="h-6 w-6 text-yellow-600" />
-                        <div>
-                          <p className="font-semibold text-yellow-800">Vocabulary Champion</p>
-                          <p className="text-sm text-yellow-600">50+ words answered</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
-                {isCurrentPlayerHost && (
-                    <SoundButton
-                      onClick={handleRestart}
-                    className="mobile-btn-lg px-8 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white shadow-lg transform hover:scale-105 transition-all duration-200 rounded-2xl"
-                    >
-                      <RotateCcw className="h-5 w-5 mr-2" />
-                      {strings.playAgain}
-                    </SoundButton>
-                )}
-                <SoundButton
-                  onClick={handleLeaveRoom}
-                  className="mobile-btn-lg px-8 bg-gradient-to-r from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 text-white shadow-lg transform hover:scale-105 transition-all duration-200 rounded-2xl"
-                >
-                  <LogOut className="h-5 w-5 mr-2" />
-                  {strings.leaveRoom}
-                </SoundButton>
-              </div>
             </div>
         )}
         </div>
