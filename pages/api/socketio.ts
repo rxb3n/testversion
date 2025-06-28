@@ -129,7 +129,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const cleanupInterval = setInterval(async () => {
       try {
         const now = new Date();
-        const INACTIVITY_THRESHOLD = 120000; // 120 seconds
+        const INACTIVITY_THRESHOLD = 120000; // 120 seconds for lobby/finished rooms
+        const PLAYING_INACTIVITY_THRESHOLD = 300000; // 300 seconds (5 minutes) for playing rooms
         const WARNING_THRESHOLD = 90000; // 90 seconds
 
         for (const [roomId, activity] of roomActivityTracker.entries()) {
@@ -140,7 +141,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             activity.warningIssued = true;
           }
 
-          if (timeSinceLastActivity > INACTIVITY_THRESHOLD) {
+          // Get room state to determine appropriate threshold
+          const room = await getRoom(roomId);
+          const threshold = room?.game_state === "playing" ? PLAYING_INACTIVITY_THRESHOLD : INACTIVITY_THRESHOLD;
+
+          if (timeSinceLastActivity > threshold) {
             io.to(roomId).emit("room-closed", {
               type: "inactivity_cleanup",
               message: "Room closed due to inactivity",
@@ -275,6 +280,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const room = await getRoom(roomId)
           if (!room) {
             return callback({ error: "Room not found", status: 404 })
+          }
+          
+          // Allow reconnection during active gameplay
+          if (room.game_state === "playing") {
+            // Check if this player was already in the room
+            const existingPlayer = room.players.find(p => p.id === playerId);
+            if (existingPlayer) {
+              // Player is reconnecting - update their last_seen and allow rejoin
+              console.log(`🔄 Player ${playerId} reconnecting to room ${roomId}`);
+              await updatePlayer(playerId, { last_seen: new Date() });
+              
+              // Join the socket to the room
+              socket.join(roomId)
+              updateRoomActivityTracker(roomId, playerId)
+              
+              // Track socket-player association
+              socketPlayerMap.set(socket.id, { roomId, playerId })
+              
+              // Track player heartbeat
+              playerHeartbeats.set(playerId, { lastSeen: new Date(), roomId })
+              
+              const updatedRoom = await getRoom(roomId)
+              
+              callback({ room: updatedRoom })
+              io.to(roomId).emit("room-update", { room: updatedRoom })
+              return
+            }
           }
           
           if (room.game_state === "playing") {

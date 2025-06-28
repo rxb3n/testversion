@@ -586,15 +586,26 @@ export async function removePlayerFromRoom(playerId: string, io?: SocketIOServer
     let roomDeleted = false;
 
     if (remainingPlayerCount === 0) {
-      // Room is empty - delete it immediately
-      console.log(`🗑️ Room ${roomId} is empty, deleting automatically...`);
-      await client.query("DELETE FROM rooms WHERE id = $1", [roomId]);
-      roomDeleted = true;
-      console.log(`✅ Empty room ${roomId} deleted successfully`);
+      // Only delete room if it's empty AND not in active gameplay
+      const roomStateResult = await client.query("SELECT game_state FROM rooms WHERE id = $1", [roomId]);
+      const roomState = roomStateResult.rows[0]?.game_state;
+      
+      if (roomState === "lobby" || roomState === "finished") {
+        // Room is empty and not in active gameplay - delete it
+        console.log(`🗑️ Room ${roomId} is empty and in ${roomState} state, deleting automatically...`);
+        await client.query("DELETE FROM rooms WHERE id = $1", [roomId]);
+        roomDeleted = true;
+        console.log(`✅ Empty room ${roomId} deleted successfully`);
 
-      // Notify any lingering clients that room is closed
-      if (io) {
-        io.to(roomId).emit("error", { message: "Room closed - no players remaining", status: 404 });
+        // Notify any lingering clients that room is closed
+        if (io) {
+          io.to(roomId).emit("error", { message: "Room closed - no players remaining", status: 404 });
+        }
+      } else {
+        // Room is empty but in "playing" state - keep it for a while to allow reconnection
+        console.log(`⏳ Room ${roomId} is empty but in ${roomState} state - keeping for potential reconnection`);
+        // Update room activity to prevent immediate cleanup
+        await client.query("UPDATE rooms SET last_activity = NOW() WHERE id = $1", [roomId]);
       }
     } else {
       // Room still has players - ensure someone is host if the host left

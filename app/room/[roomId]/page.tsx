@@ -582,26 +582,18 @@ export default function RoomPage() {
       setIsLoading(false);
     });
 
-    newSocket.on("disconnect", (reason: any) => {
-      console.log("🔌 Socket disconnected:", reason);
-      setConnectionStatus('connecting');
+    newSocket.on("disconnect", (reason) => {
+      console.log(`🔌 Socket ${socket.id} disconnected:`, reason)
+      setConnectionStatus('error')
       
-      // Handle specific disconnect reasons
-      if (reason === 'io server disconnect') {
-        // the disconnection was initiated by the server, reconnect manually
-        console.log("🔄 Server initiated disconnect - reconnecting...");
+      // If we're in an active game, try to reconnect
+      if (room?.game_state === "playing" && roomId && playerId) {
+        console.log("🔄 Attempting to reconnect to active game...")
         setTimeout(() => {
-          newSocket.connect();
-        }, 1000);
-      } else if (reason === 'io client disconnect') {
-        // the disconnection was initiated by the client
-        console.log("🔌 Client initiated disconnect");
-      } else {
-        // unexpected disconnection, try to reconnect
-        console.log("🔄 Unexpected disconnect - attempting reconnection...");
-        setTimeout(() => {
-          newSocket.connect();
-        }, 2000);
+          if (newSocket.disconnected) {
+            newSocket.connect()
+          }
+        }, 1000)
       }
     });
 
@@ -868,32 +860,35 @@ export default function RoomPage() {
     });
 
     newSocket.on("host-left", () => {
-      setError("Host left the room. Redirecting to home page...");
+      console.log("👑 Host left the room");
+      setError("Host left the room. You will be redirected to the home page.");
       setTimeout(() => {
         router.push('/');
-      }, 2000);
+      }, 3000);
     });
 
-    newSocket.on("error", (error: any) => {
-      console.error("❌ Socket error:", error);
+    newSocket.on("error", (errorData: any) => {
+      console.log("❌ Socket error:", errorData);
       
-      // Handle specific room closure errors
-      if (error.message?.includes('Room closed') || error.status === 404) {
-        console.log("🚪 Room closure error detected, attempting recovery...");
-        setError("Room connection issue. Attempting to reconnect...");
-        
-        // Try to rejoin the room
+      // Handle specific error types
+      if (errorData.message === "Room closed - no players remaining") {
+        setError("Room was closed because all players left.");
         setTimeout(() => {
-          if (newSocket && newSocket.connected) {
-            newSocket.emit("join-room", { 
-              roomId, 
-              playerId, 
-              data: { name: decodeURIComponent(playerName), isHost } 
-            });
+          router.push('/');
+        }, 3000);
+      } else if (errorData.message === "Host disconnected") {
+        // Don't immediately redirect - give time for reconnection
+        setError("Host disconnected. Attempting to reconnect...");
+        setTimeout(() => {
+          if (connectionStatus === 'error') {
+            setError("Unable to reconnect. Redirecting to home page.");
+            setTimeout(() => {
+              router.push('/');
+            }, 2000);
           }
-        }, 2000);
+        }, 5000);
       } else {
-        setError(error.message || "Connection error occurred");
+        setError(`Connection error: ${errorData.message}`);
       }
     });
 
