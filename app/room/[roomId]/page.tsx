@@ -1522,13 +1522,12 @@ export default function RoomPage() {
         });
       }
       
-      // Clear any previous feedback timeout
+      // Clear feedback after 0.75 seconds for competition mode
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-      // Hide feedback after 2 seconds
       feedbackTimeoutRef.current = setTimeout(() => {
         setPracticeCompetitionFeedback((fb: typeof practiceCompetitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
-        setTimeout(() => setPracticeCompetitionFeedback(null), 500); // fade out duration
-      }, 2000);
+        setTimeout(() => setPracticeCompetitionFeedback(null), 500);
+      }, 750);
     }
     
     // Handle competition mode feedback only (for other players)
@@ -2586,6 +2585,29 @@ export default function RoomPage() {
                             : 'text-blue-700'
                         }`}>
                           {practiceTimer}s
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Prominent 10-second timer for competition mode */}
+              {room.game_mode === "competition" && currentQuestion && (
+                <div className="mb-6">
+                  <div className="bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-200 rounded-3xl p-6 shadow-lg">
+                    <div className="flex items-center justify-center gap-4">
+                      <Timer className="h-8 w-8 text-orange-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-600 mb-1">{strings.timeRemaining}</p>
+                        <p className={`text-4xl md:text-5xl font-bold transition-all duration-300 ${
+                          timeLeft <= 3 
+                            ? 'text-red-600 animate-pulse' 
+                            : timeLeft <= 5 
+                            ? 'text-orange-600' 
+                            : 'text-orange-700'
+                        }`}>
+                          {timeLeft}s
                         </p>
                       </div>
                     </div>
