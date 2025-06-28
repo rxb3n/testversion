@@ -311,14 +311,14 @@ export default function RoomPage() {
     if (
       room?.game_state === "playing" &&
       room.game_mode === "cooperation" &&
-      room.current_challenge_player === playerId &&
       cooperationChallenge &&
       !cooperationTimerActive
     ) {
-      console.log("Starting cooperation timer for player", playerId);
+      console.log("Starting cooperation timer for all players");
       startCooperationTimer();
-      // Auto-focus input when it's the player's turn
-      if (inputRef.current) {
+      
+      // Auto-focus input only for the active player
+      if (room.current_challenge_player === playerId && inputRef.current) {
         inputRef.current.focus();
       }
     }
@@ -365,6 +365,19 @@ export default function RoomPage() {
       audioRef.current.stopClocktick();
     }
   }, [room?.current_challenge_player, playerId, cooperationTimerActive, room?.game_mode, room?.game_state]);
+
+  // Start cooperation timer for all players when challenge starts
+  useEffect(() => {
+    if (
+      room?.game_state === "playing" &&
+      room.game_mode === "cooperation" &&
+      cooperationChallenge &&
+      !cooperationTimerActive
+    ) {
+      console.log("Starting cooperation timer for all players");
+      startCooperationTimer();
+    }
+  }, [room?.game_state, room?.game_mode, cooperationChallenge, cooperationTimerActive]);
 
   // Stop clocktick when game finishes (lives reach 0)
   useEffect(() => {

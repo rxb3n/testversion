@@ -167,49 +167,56 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           broadcastAvailableRooms(io);
         }
 
-        // Check for disconnected players (no heartbeat for 90 seconds)
+        // Check for disconnected players (no heartbeat for 90 seconds) - only in lobby
         const PLAYER_HEARTBEAT_THRESHOLD = 90000; // 90 seconds
         for (const [playerId, heartbeat] of playerHeartbeats.entries()) {
           const timeSinceLastHeartbeat = now.getTime() - heartbeat.lastSeen.getTime();
           if (timeSinceLastHeartbeat > PLAYER_HEARTBEAT_THRESHOLD) {
-            console.log(`👻 Removing ghost player ${playerId} (no heartbeat for ${Math.round(timeSinceLastHeartbeat / 1000)}s)`);
-            try {
-              const { roomId: actualRoomId, wasHost, roomDeleted } = await removePlayerFromRoom(playerId, io);
-              
-              if (actualRoomId) {
-                // Update activity tracker
-                const activity = roomActivityTracker.get(actualRoomId);
-                if (activity) {
-                  activity.players.delete(playerId);
-                  if (activity.players.size === 0) {
-                    roomActivityTracker.delete(actualRoomId);
-                  }
-                }
+            // Only remove players if their room is in lobby state
+            const room = await getRoom(heartbeat.roomId);
+            if (room && room.game_state === "lobby") {
+              console.log(`👻 Removing ghost player ${playerId} (no heartbeat for ${Math.round(timeSinceLastHeartbeat / 1000)}s)`);
+              try {
+                const { roomId: actualRoomId, wasHost, roomDeleted } = await removePlayerFromRoom(playerId, io);
                 
-                if (roomDeleted) {
-                  console.log(`🗑️ Room ${actualRoomId} deleted due to ghost player cleanup`);
-                } else {
-                  const room = await getRoom(actualRoomId);
-                  if (room) {
-                    if (wasHost) {
-                      console.log(`👑 Ghost host ${playerId} removed from room ${actualRoomId}`);
-                      io.to(actualRoomId).emit("host-left");
-                      setTimeout(() => {
-                        io.to(actualRoomId).emit("error", { message: "Host disconnected", status: 404 })
-                      }, 500);
-                    } else {
-                      console.log(`👤 Ghost player ${playerId} removed from room ${actualRoomId}`);
-                      io.to(actualRoomId).emit("room-update", { room });
+                if (actualRoomId) {
+                  // Update activity tracker
+                  const activity = roomActivityTracker.get(actualRoomId);
+                  if (activity) {
+                    activity.players.delete(playerId);
+                    if (activity.players.size === 0) {
+                      roomActivityTracker.delete(actualRoomId);
+                    }
+                  }
+                  
+                  if (roomDeleted) {
+                    console.log(`🗑️ Room ${actualRoomId} deleted due to ghost player cleanup`);
+                  } else {
+                    const room = await getRoom(actualRoomId);
+                    if (room) {
+                      if (wasHost) {
+                        console.log(`👑 Ghost host ${playerId} removed from room ${actualRoomId}`);
+                        io.to(actualRoomId).emit("host-left");
+                        setTimeout(() => {
+                          io.to(actualRoomId).emit("error", { message: "Host disconnected", status: 404 })
+                        }, 500);
+                      } else {
+                        console.log(`👤 Ghost player ${playerId} removed from room ${actualRoomId}`);
+                        io.to(actualRoomId).emit("room-update", { room });
+                      }
                     }
                   }
                 }
+              } catch (error) {
+                console.error(`❌ Error removing ghost player ${playerId}:`, error);
               }
-            } catch (error) {
-              console.error(`❌ Error removing ghost player ${playerId}:`, error);
+              
+              // Remove from heartbeat tracking
+              playerHeartbeats.delete(playerId);
+            } else {
+              // Player is in active game - don't remove them, just log the missed heartbeat
+              console.log(`⏰ Player ${playerId} missed heartbeat but is in active game - keeping them`);
             }
-            
-            // Remove from heartbeat tracking
-            playerHeartbeats.delete(playerId);
           }
         }
 
