@@ -160,6 +160,7 @@ export default function RoomPage() {
   const [practiceCorrectAnswers, setPracticeCorrectAnswers] = useState(0);
   const [practiceIncorrectAnswers, setPracticeIncorrectAnswers] = useState(0);
   const [practiceAccuracy, setPracticeAccuracy] = useState(0);
+  const [practiceFirstAnswerSubmitted, setPracticeFirstAnswerSubmitted] = useState(false);
   const practiceTimerRef = useRef<number | null>(null);
 
   // Practice mode background pulse state
@@ -895,6 +896,18 @@ export default function RoomPage() {
       setRoom(updatedRoom);
     });
 
+    // Practice mode first answer detection
+    newSocket.on("practice-first-answer", ({ playerId: answerPlayerId }: { playerId: string }) => {
+      console.log("🎯 First answer submitted in practice mode by player:", answerPlayerId);
+      
+      // Start the timer if it hasn't been started yet
+      if (!practiceTimerActive && !practiceFirstAnswerSubmitted) {
+        console.log("🚀 Starting practice timer on first answer");
+        setPracticeFirstAnswerSubmitted(true);
+        startPracticeTimer();
+      }
+    });
+
     newSocket.on("host-left", () => {
       console.log("👑 Host left the room");
       setError("Host left the room. You will be redirected to the home page.");
@@ -1004,14 +1017,15 @@ export default function RoomPage() {
       
       // Initialize practice mode timer
       if (updatedRoom.game_mode === "practice") {
-        console.log("🎮 Practice mode game started - initializing timer");
+        console.log("🎮 Practice mode game started - initializing state");
         setPracticeTimer(60);
         setPracticeWordsAnswered(0);
         setPracticeCorrectAnswers(0);
         setPracticeIncorrectAnswers(0);
         setPracticeAccuracy(0);
         setPracticeBackgroundPulse(null);
-        startPracticeTimer();
+        setPracticeFirstAnswerSubmitted(false);
+        // Don't start timer yet - wait for first answer
         
         // Load first question for practice mode
         setTimeout(() => {
@@ -1037,14 +1051,15 @@ export default function RoomPage() {
       
       // Initialize practice mode timer
       if (updatedRoom.game_mode === "practice") {
-        console.log("🔄 Practice mode room restarted - initializing timer");
+        console.log("🔄 Practice mode room restarted - initializing state");
         setPracticeTimer(60);
         setPracticeWordsAnswered(0);
         setPracticeCorrectAnswers(0);
         setPracticeIncorrectAnswers(0);
         setPracticeAccuracy(0);
         setPracticeBackgroundPulse(null);
-        startPracticeTimer();
+        setPracticeFirstAnswerSubmitted(false);
+        // Don't start timer yet - wait for first answer
         
         // Load first question for practice mode
         setTimeout(() => {
@@ -1412,6 +1427,16 @@ export default function RoomPage() {
     
     // Handle practice mode differently
     if (room?.game_mode === "practice") {
+      // Start timer on first answer if not already started
+      if (!practiceTimerActive && !practiceFirstAnswerSubmitted) {
+        console.log("🚀 Starting practice timer on first answer submission");
+        setPracticeFirstAnswerSubmitted(true);
+        startPracticeTimer();
+        
+        // Emit first answer event to notify other players
+        socket.emit("practice-first-answer", { roomId, playerId });
+      }
+      
       if (isCorrect) {
         // Increment words answered and correct answers for correct answers
         setPracticeWordsAnswered(prev => prev + 1);

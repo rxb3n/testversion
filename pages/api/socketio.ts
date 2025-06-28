@@ -888,6 +888,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       })
 
+      // Practice mode first answer handler
+      socket.on("practice-first-answer", ({ roomId, playerId }) => {
+        try {
+          console.log(`🎯 Practice first answer from player ${playerId} in room ${roomId}`);
+          
+          // Broadcast to all players in the room to start their timers
+          io.to(roomId).emit("practice-first-answer", { playerId });
+          
+        } catch (error) {
+          console.error(`❌ Error processing practice first answer:`, error)
+        }
+      })
+
       // Handle cooperation typing events
       socket.on("cooperation-typing", ({ roomId, playerId, text }) => {
         socket.to(roomId).emit("cooperation-typing", { playerId, text })
