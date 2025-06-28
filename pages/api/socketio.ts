@@ -807,6 +807,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       })
 
+      // Practice mode timeout handler
+      socket.on("practice-timeout", async ({ roomId, playerId }, callback) => {
+        try {
+          console.log(`⏰ Practice timeout for player ${playerId} in room ${roomId}`);
+          
+          const room = await getRoom(roomId)
+          if (!room || room.game_mode !== "practice") {
+            console.log(`❌ Invalid room or game mode for practice timeout`);
+            return
+          }
+
+          // End the practice game for all players
+          await updateRoom(roomId, {
+            game_state: "finished"
+          })
+
+          const updatedRoom = await getRoom(roomId)
+          
+          // Emit practice timeout event to all players in the room
+          io.to(roomId).emit("practice-timeout", {
+            playerId: playerId,
+            correctAnswer: "Practice session ended"
+          })
+          
+          // Update room state for all players
+          io.to(roomId).emit("room-update", { room: updatedRoom })
+          
+          console.log(`✅ Practice mode ended for room ${roomId}`);
+          
+          if (callback) {
+            callback({ success: true, room: updatedRoom })
+          }
+          
+        } catch (error) {
+          console.error(`❌ Error processing practice timeout:`, error)
+          if (callback) {
+            callback({ error: "Failed to process practice timeout", status: 500 })
+          }
+        }
+      })
+
       // Handle cooperation typing events
       socket.on("cooperation-typing", ({ roomId, playerId, text }) => {
         socket.to(roomId).emit("cooperation-typing", { playerId, text })

@@ -838,6 +838,11 @@ export default function RoomPage() {
     });
 
     newSocket.on("practice-timeout", ({ playerId: timeoutPlayerId, correctAnswer }: { playerId: string; correctAnswer: string }) => {
+      console.log("⏰ Practice timeout received for player:", timeoutPlayerId);
+      
+      // Stop the practice timer
+      stopPracticeTimer();
+      
       const currentRoom = roomRef.current;
       const timeoutPlayer = currentRoom?.players.find((p: Player) => p.id === timeoutPlayerId);
       if (timeoutPlayer) {
@@ -976,6 +981,11 @@ export default function RoomPage() {
         setPracticeAccuracy(0);
         setPracticeBackgroundPulse(null);
         startPracticeTimer();
+        
+        // Load first question for practice mode
+        setTimeout(() => {
+          loadQuestion(updatedRoom);
+        }, 1000);
       }
     });
 
@@ -1004,6 +1014,11 @@ export default function RoomPage() {
         setPracticeAccuracy(0);
         setPracticeBackgroundPulse(null);
         startPracticeTimer();
+        
+        // Load first question for practice mode
+        setTimeout(() => {
+          loadQuestion(updatedRoom);
+        }, 1000);
       }
     });
 
@@ -1414,7 +1429,7 @@ export default function RoomPage() {
       }, 2000);
       
       // Emit answer to server with 1 point for correct answers
-      socket.emit("submit-answer", {
+      socket.emit("answer", {
         roomId,
         playerId,
         data: {
@@ -1432,6 +1447,13 @@ export default function RoomPage() {
       setCurrentQuestion(null);
       setSelectedAnswer("");
       setIsAnswering(false);
+      
+      // Load next question for practice mode after a short delay
+      setTimeout(() => {
+        if (room && practiceTimerActive) {
+          loadQuestion(room);
+        }
+      }, 500);
       
       // Don't reset the practice timer - let it continue counting down
       return;
@@ -1514,7 +1536,7 @@ export default function RoomPage() {
     }
     
     // Emit answer to server
-    socket.emit("submit-answer", {
+    socket.emit("answer", {
       roomId,
       playerId,
       data: {
