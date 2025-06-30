@@ -388,6 +388,34 @@ export default function RoomPage() {
 
   // Play lost sound when cooperation game finishes (only once)
   const [hasPlayedLostSound, setHasPlayedLostSound] = useState(false);
+
+    // Listen for server-synchronized timer ticks
+  useEffect(() => {
+    if (!socket) return;
+    const handleTick = ({ timeLeft }: { timeLeft: number }) => {
+      setPracticeTimer(timeLeft);
+      if (timeLeft <= 0) {
+        setPracticeTimerActive(false);
+      }
+    };
+    socket.on("practice-timer-tick", handleTick);
+    return () => {
+      socket.off("practice-timer-tick", handleTick);
+    };
+  }, [socket]);
+
+  // Stop timer and set to 0 on practice-timeout
+  useEffect(() => {
+    if (!socket) return;
+    const handleTimeout = () => {
+      setPracticeTimer(0);
+      setPracticeTimerActive(false);
+    };
+    socket.on("practice-timeout", handleTimeout);
+    return () => {
+      socket.off("practice-timeout", handleTimeout);
+    };
+  }, [socket]);
   
   useEffect(() => {
     if (room?.game_state === "finished" && room?.game_mode === "cooperation" && !hasPlayedLostSound) {
@@ -1970,33 +1998,6 @@ export default function RoomPage() {
     setPracticeTimerActive(true);
   };
 
-  // Listen for server-synchronized timer ticks
-  useEffect(() => {
-    if (!socket) return;
-    const handleTick = ({ timeLeft }: { timeLeft: number }) => {
-      setPracticeTimer(timeLeft);
-      if (timeLeft <= 0) {
-        setPracticeTimerActive(false);
-      }
-    };
-    socket.on("practice-timer-tick", handleTick);
-    return () => {
-      socket.off("practice-timer-tick", handleTick);
-    };
-  }, [socket]);
-
-  // Stop timer and set to 0 on practice-timeout
-  useEffect(() => {
-    if (!socket) return;
-    const handleTimeout = () => {
-      setPracticeTimer(0);
-      setPracticeTimerActive(false);
-    };
-    socket.on("practice-timeout", handleTimeout);
-    return () => {
-      socket.off("practice-timeout", handleTimeout);
-    };
-  }, [socket]);
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
