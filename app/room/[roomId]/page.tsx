@@ -161,7 +161,6 @@ export default function RoomPage() {
   const [practiceIncorrectAnswers, setPracticeIncorrectAnswers] = useState(0);
   const [practiceAccuracy, setPracticeAccuracy] = useState(0);
   const [practiceFirstAnswerSubmitted, setPracticeFirstAnswerSubmitted] = useState(false);
-  const practiceTimerRef = useRef<number | null>(null);
 
   // Practice mode background pulse state
   const [practiceBackgroundPulse, setPracticeBackgroundPulse] = useState<'correct' | 'incorrect' | null>(null);
@@ -868,10 +867,8 @@ export default function RoomPage() {
 
     newSocket.on("practice-timeout", ({ playerId: timeoutPlayerId, correctAnswer }: { playerId: string; correctAnswer: string }) => {
       console.log("⏰ Practice timeout received for player:", timeoutPlayerId);
-      
-      // Stop the practice timer
-      stopPracticeTimer();
-      
+      // Stop the practice timer (no longer needed)
+      // stopPracticeTimer();
       const currentRoom = roomRef.current;
       const timeoutPlayer = currentRoom?.players.find((p: Player) => p.id === timeoutPlayerId);
       if (timeoutPlayer) {
@@ -1103,9 +1100,6 @@ export default function RoomPage() {
       if (cooperationTimerRef.current) {
         clearInterval(cooperationTimerRef.current);
       }
-      if (practiceTimerRef.current) {
-        clearInterval(practiceTimerRef.current);
-      }
       newSocket.close();
     };
   }, [roomId, playerId, playerName, isHost, router]);
@@ -1132,9 +1126,6 @@ export default function RoomPage() {
       }
       if (cooperationTimerRef.current) {
         clearInterval(cooperationTimerRef.current);
-      }
-      if (practiceTimerRef.current) {
-        clearInterval(practiceTimerRef.current);
       }
       if (heartbeatRef.current) {
         clearInterval(heartbeatRef.current);
@@ -1973,60 +1964,39 @@ export default function RoomPage() {
     );
   }
 
-  // Start practice timer
+  // Remove the local interval logic from startPracticeTimer
   const startPracticeTimer = () => {
-    console.log("🚀 Starting practice timer...");
-    
-    // Clear any existing timer
-    if (practiceTimerRef.current) {
-      clearInterval(practiceTimerRef.current);
-      practiceTimerRef.current = null;
-    }
-    
-    // Reset timer to 60 seconds
     setPracticeTimer(60);
     setPracticeTimerActive(true);
-    
-    // Start the countdown
-    practiceTimerRef.current = window.setInterval(() => {
-      setPracticeTimer((prev) => {
-        console.log("⏰ Practice timer tick:", prev);
-        
-        if (prev <= 1) {
-          // Game over - calculate final statistics
-          const totalAnswers = practiceCorrectAnswers + practiceIncorrectAnswers;
-          const accuracy = totalAnswers > 0 ? Math.round((practiceCorrectAnswers / totalAnswers) * 100) : 0;
-          setPracticeAccuracy(accuracy);
-          
-          // Stop the timer
-          if (practiceTimerRef.current) {
-            clearInterval(practiceTimerRef.current);
-            practiceTimerRef.current = null;
-          }
-          setPracticeTimerActive(false);
-          
-          // Emit practice timeout to end the game
-          if (socket) {
-            socket.emit("practice-timeout", { roomId, playerId });
-          }
-          
-          return 0;
-        }
-        
-        return prev - 1;
-      });
-    }, 1000);
   };
 
-  // Stop practice timer
-  const stopPracticeTimer = () => {
-    console.log("🛑 Stopping practice timer...");
-    if (practiceTimerRef.current) {
-      clearInterval(practiceTimerRef.current);
-      practiceTimerRef.current = null;
-    }
-    setPracticeTimerActive(false);
-  };
+  // Listen for server-synchronized timer ticks
+  useEffect(() => {
+    if (!socket) return;
+    const handleTick = ({ timeLeft }: { timeLeft: number }) => {
+      setPracticeTimer(timeLeft);
+      if (timeLeft <= 0) {
+        setPracticeTimerActive(false);
+      }
+    };
+    socket.on("practice-timer-tick", handleTick);
+    return () => {
+      socket.off("practice-timer-tick", handleTick);
+    };
+  }, [socket]);
+
+  // Stop timer and set to 0 on practice-timeout
+  useEffect(() => {
+    if (!socket) return;
+    const handleTimeout = () => {
+      setPracticeTimer(0);
+      setPracticeTimerActive(false);
+    };
+    socket.on("practice-timeout", handleTimeout);
+    return () => {
+      socket.off("practice-timeout", handleTimeout);
+    };
+  }, [socket]);
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">

@@ -44,6 +44,10 @@ const socketPlayerMap = new Map<string, { roomId: string; playerId: string }>();
 // Track player heartbeats for individual player monitoring
 const playerHeartbeats = new Map<string, { lastSeen: Date; roomId: string }>();
 
+// Track practice timers for each room (for synchronized practice mode timer)
+// Use 'any' for interval type to avoid NodeJS.Timeout linter issues in environments without @types/node
+const practiceTimers = new Map<string, { timeLeft: number; interval: any }>();
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!res.socket.server.io) {
     await ensureDbInitialized()
@@ -852,6 +856,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         try {
           console.log(`⏰ Practice timeout for player ${playerId} in room ${roomId}`);
           
+          // Clear the synchronized timer for this room if it exists
+          if (practiceTimers.has(roomId)) {
+            const timerObj = practiceTimers.get(roomId);
+            if (timerObj) clearInterval(timerObj.interval);
+            practiceTimers.delete(roomId);
+          }
+          
           const room = await getRoom(roomId)
           if (!room || room.game_mode !== "practice") {
             console.log(`❌ Invalid room or game mode for practice timeout`);
@@ -892,14 +903,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       socket.on("practice-first-answer", ({ roomId, playerId }) => {
         try {
           console.log(`🎯 Practice first answer from player ${playerId} in room ${roomId}`);
-          
-          // Broadcast to all players in the room to start their timers
+          // Broadcast to all players in the room to start their timers (legacy, for backward compatibility)
           io.to(roomId).emit("practice-first-answer", { playerId });
-          
+
+          // If a timer is already running for this room, do nothing
+          if (practiceTimers.has(roomId)) return;
+
+          // Start a synchronized timer for the room
+          let timeLeft = 60;
+          const interval = setInterval(() => {
+            timeLeft -= 1;
+            // Emit the current time left to all clients
+            io.to(roomId).emit("practice-timer-tick", { timeLeft });
+            if (timeLeft <= 0) {
+              clearInterval(interval);
+              practiceTimers.delete(roomId);
+              // End the practice game for all players
+              io.to(roomId).emit("practice-timeout", {
+                playerId: playerId,
+                correctAnswer: "Practice session ended"
+              });
+            }
+          }, 1000);
+          practiceTimers.set(roomId, { timeLeft, interval });
         } catch (error) {
           console.error(`❌ Error processing practice first answer:`, error)
         }
-      })
+      });
 
       // Handle cooperation typing events
       socket.on("cooperation-typing", ({ roomId, playerId, text }) => {
