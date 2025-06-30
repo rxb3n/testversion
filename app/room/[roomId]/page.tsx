@@ -2019,6 +2019,22 @@ export default function RoomPage() {
     setPracticeTimerActive(true);
   };
 
+  // After all function declarations, add:
+  useEffect(() => {
+    if (!socket) return;
+    const handler = ({ playerId: answerPlayerId }) => {
+      console.log("🎯 First answer submitted in practice mode by player:", answerPlayerId);
+      if (!practiceTimerActive && !practiceFirstAnswerSubmitted) {
+        console.log("🚀 Starting practice timer on first answer");
+        setPracticeFirstAnswerSubmitted(true);
+        startPracticeTimer();
+      }
+    };
+    socket.on("practice-first-answer", handler);
+    return () => {
+      socket.off("practice-first-answer", handler);
+    };
+  }, [socket, practiceTimerActive, practiceFirstAnswerSubmitted]);
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
@@ -2693,6 +2709,95 @@ export default function RoomPage() {
               )}
               
             </div>
+            <div className="w-full mt-4 flex justify-center">
+  <div className="max-w-xl w-full">
+    <Card className="bg-white/90 backdrop-blur-sm border-blue-200 shadow rounded-2xl">
+      <CardHeader className="text-center pb-2">
+        <CardTitle className="flex items-center justify-center gap-2 text-base text-blue-800">
+          <Trophy className="h-4 w-4" />
+          {strings.leaderboard}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-2">
+        <div className="flex flex-col gap-1">
+          {room.players
+            .sort((a, b) => {
+              if (room.game_mode === "cooperation") {
+                return 0;
+              } else if (room.game_mode === "practice") {
+                const aScore = a.id === playerId ? practiceCorrectAnswers : a.score;
+                const bScore = b.id === playerId ? practiceCorrectAnswers : b.score;
+                return bScore - aScore;
+              } else {
+                return b.score - a.score;
+              }
+            })
+            .map((player, index) => {
+              const getDisplayScore = (player) => {
+                if (room.game_mode === "cooperation") {
+                  return room.cooperation_score || 0;
+                } else if (room.game_mode === "practice") {
+                  if (player.id === playerId) {
+                    return practiceCorrectAnswers;
+                  } else {
+                    return player.score;
+                  }
+                } else {
+                  return player.score;
+                }
+              };
+              const displayScore = getDisplayScore(player);
+              return (
+                <div
+                  key={player.id}
+                  className={`flex flex-wrap items-center justify-between px-2 py-1 rounded-xl border transition-all duration-300 shadow-sm text-xs gap-2 ${
+                    index === 0
+                      ? 'bg-gradient-to-r from-yellow-100 to-amber-100 border-yellow-300'
+                      : index === 1
+                      ? 'bg-gradient-to-r from-gray-100 to-slate-100 border-gray-300'
+                      : index === 2
+                      ? 'bg-gradient-to-r from-orange-100 to-red-100 border-orange-300'
+                      : 'bg-white/60 border-gray-200/50 hover:bg-white/80'
+                  }`}
+                  style={{wordBreak: 'break-word'}}
+                >
+                  <div className="flex items-center gap-1 min-w-0">
+                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 border-2 border-yellow-300">
+                      {index === 0 && <Trophy className="h-3 w-3 text-yellow-600" />}
+                      {index === 1 && <Star className="h-3 w-3 text-gray-600" />}
+                      {index === 2 && <Award className="h-3 w-3 text-orange-600" />}
+                      {index > 2 && <span className="text-xs font-bold text-gray-600">{index + 1}</span>}
+                    </div>
+                    <span className={`font-semibold truncate ${index === 0 ? 'text-yellow-800' : 'text-gray-900'}`}>{player.name}</span>
+                    {player.id === playerId && (
+                      <Badge variant="outline" className="text-xxs bg-blue-100 border-blue-300 text-blue-800 rounded-full px-1 py-0.5 ml-1">
+                        {strings.you}
+                      </Badge>
+                    )}
+                    {player.language && (
+                      <span className="flex items-center gap-1 ml-1">
+                        <FlagIcon country={getCountryCode(player.language)} className="h-3 w-3" />
+                        <span className="text-xs text-gray-600 truncate">
+                          {GAME_LANGUAGES.find(l => l.value === player.language)?.label}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                  <Badge variant="outline" className={`text-xs font-bold rounded-full px-2 py-0.5 ${
+                    index === 0
+                      ? 'bg-yellow-100 border-yellow-300 text-yellow-800'
+                      : 'bg-gray-100 border-gray-300 text-gray-800'
+                  }`}>
+                    {room.game_mode === "practice" ? `${displayScore} correct` : `${displayScore} ${strings.points}`}
+                  </Badge>
+                </div>
+              );
+            })}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+</div>
           </div>
         )}
 
