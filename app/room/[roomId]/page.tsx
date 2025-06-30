@@ -437,6 +437,23 @@ export default function RoomPage() {
       socket.off("practice-timeout", handleTimeout);
     };
   }, [socket, practiceCorrectAnswers, practiceIncorrectAnswers, room, playerId]);
+
+    // After all function declarations, add:
+    useEffect(() => {
+      if (!socket) return;
+      const handler = ({ playerId: answerPlayerId }) => {
+        console.log("🎯 First answer submitted in practice mode by player:", answerPlayerId);
+        if (!practiceTimerActive && !practiceFirstAnswerSubmitted) {
+          console.log("🚀 Starting practice timer on first answer");
+          setPracticeFirstAnswerSubmitted(true);
+          startPracticeTimer();
+        }
+      };
+      socket.on("practice-first-answer", handler);
+      return () => {
+        socket.off("practice-first-answer", handler);
+      };
+    }, [socket, practiceTimerActive, practiceFirstAnswerSubmitted]);
   
   useEffect(() => {
     if (room?.game_state === "finished" && room?.game_mode === "cooperation" && !hasPlayedLostSound) {
@@ -2018,23 +2035,6 @@ export default function RoomPage() {
     setPracticeTimer(60);
     setPracticeTimerActive(true);
   };
-
-  // After all function declarations, add:
-  useEffect(() => {
-    if (!socket) return;
-    const handler = ({ playerId: answerPlayerId }) => {
-      console.log("🎯 First answer submitted in practice mode by player:", answerPlayerId);
-      if (!practiceTimerActive && !practiceFirstAnswerSubmitted) {
-        console.log("🚀 Starting practice timer on first answer");
-        setPracticeFirstAnswerSubmitted(true);
-        startPracticeTimer();
-      }
-    };
-    socket.on("practice-first-answer", handler);
-    return () => {
-      socket.off("practice-first-answer", handler);
-    };
-  }, [socket, practiceTimerActive, practiceFirstAnswerSubmitted]);
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
