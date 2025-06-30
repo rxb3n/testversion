@@ -410,12 +410,33 @@ export default function RoomPage() {
     const handleTimeout = () => {
       setPracticeTimer(0);
       setPracticeTimerActive(false);
+      
+      // Calculate final accuracy for practice mode
+      const totalAnswers = practiceCorrectAnswers + practiceIncorrectAnswers;
+      const accuracy = totalAnswers > 0 ? Math.round((practiceCorrectAnswers / totalAnswers) * 100) : 0;
+      setPracticeAccuracy(accuracy);
+      
+      // Show final feedback
+      setPracticeCompetitionFeedback({
+        show: true,
+        type: 'timeout',
+        word: "Practice session ended",
+        playerName: room?.players.find(p => p.id === playerId)?.name || 'Player',
+        correctAnswer: "Practice session ended",
+        fadeOut: false
+      });
+      
+      // Clear feedback after 3 seconds
+      setTimeout(() => {
+        setPracticeCompetitionFeedback((fb: typeof practiceCompetitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
+        setTimeout(() => setPracticeCompetitionFeedback(null), 500);
+      }, 3000);
     };
     socket.on("practice-timeout", handleTimeout);
     return () => {
       socket.off("practice-timeout", handleTimeout);
     };
-  }, [socket]);
+  }, [socket, practiceCorrectAnswers, practiceIncorrectAnswers, room, playerId]);
   
   useEffect(() => {
     if (room?.game_state === "finished" && room?.game_mode === "cooperation" && !hasPlayedLostSound) {
@@ -2525,58 +2546,21 @@ export default function RoomPage() {
 
         {/* Practice/Competition Mode Gameplay */}
         {room.game_state === "playing" && (room.game_mode === "practice" || room.game_mode === "competition") && (
-          <div className="max-w-4xl mx-auto space-y-6">
-            {/* Game Header */}
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <Badge variant={"outline" as any} className={
-                  room.game_mode === "practice" 
-                      ? "bg-blue-50 text-blue-700 border-blue-200 rounded-full"
-                      : "bg-orange-50 text-orange-700 border-orange-200 rounded-full"
-                }>
-                  {room.game_mode === "practice" ? (
-                    <>
-                      <BookOpen className="h-3 w-3 mr-1" />
-                      {strings.practiceMode}
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="h-3 w-3 mr-1" />
-                      {strings.competitionMode}
-                    </>
-                  )}
-                </Badge>
-                {room.game_mode === "practice" ? (
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-gray-300 text-gray-700 rounded-full">
-                      <Check className="h-3 w-3 mr-1" />
-                      {practiceWordsAnswered} {strings.words}
-                    </Badge>
-                    <Badge variant="outline" className="border-green-300 text-green-700 rounded-full">
-                      <Target className="h-3 w-3 mr-1" />
-                      {practiceCorrectAnswers} {strings.correct}
-                    </Badge>
-                  </div>
-                ) : (
-                  <Badge variant="outline" className="border-gray-300 text-gray-700 rounded-full">
-                    <Target className="h-3 w-3 mr-1" />
-                    {strings.target}: {room.target_score}
-                  </Badge>
-                )}
-              </div>
-              
-              {/* Prominent 60-second timer for practice mode */}
-              {room.game_mode === "practice" && (
-                <div className="mb-6">
+          <div className="flex gap-6">
+            {/* Main Game Content */}
+            <div className="flex-1 space-y-6">
+              {/* Timer Display */}
+              {room.game_mode === "practice" && practiceTimerActive && (
+                <div className="text-center">
                   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-6 shadow-lg">
                     <div className="flex items-center justify-center gap-4">
-                      <Timer className="h-8 w-8 text-blue-600" />
+                      <Clock className="h-10 w-10 text-blue-600" />
                       <div>
-                        <p className="text-sm font-medium text-gray-600 mb-1">{strings.timeRemaining}</p>
-                        <p className={`text-4xl md:text-5xl font-bold transition-all duration-300 ${
-                          practiceTimer <= 5 
+                        <p className="text-lg font-medium text-gray-600 mb-2">{strings.timeRemaining}</p>
+                        <p className={`text-6xl md:text-7xl font-bold transition-all duration-300 ${
+                          practiceTimer <= 3 
                             ? 'text-red-600 animate-pulse' 
-                            : practiceTimer <= 10 
+                            : practiceTimer <= 5 
                             ? 'text-orange-600' 
                             : 'text-blue-700'
                         }`}>
@@ -2588,53 +2572,13 @@ export default function RoomPage() {
                 </div>
               )}
 
-              {/* Prominent 10-second timer for competition mode */}
-              {room.game_mode === "competition" && currentQuestion && (
-                <div className="mb-6">
-                  <div className="bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-200 rounded-3xl p-6 shadow-lg">
-                    <div className="flex items-center justify-center gap-4">
-                      <Timer className="h-8 w-8 text-orange-600" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-600 mb-1">{strings.timeRemaining}</p>
-                        <p className={`text-4xl md:text-5xl font-bold transition-all duration-300 ${
-                          timeLeft <= 3 
-                            ? 'text-red-600 animate-pulse' 
-                            : timeLeft <= 5 
-                            ? 'text-orange-600' 
-                            : 'text-orange-700'
-                        }`}>
-                          {timeLeft}s
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Question Section */}
-            {currentQuestion ? (
+              {/* Question Section */}
+              {currentQuestion ? (
                 <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl">
-                <CardHeader className="mobile-padding text-center">
+                  <CardHeader className="mobile-padding text-center">
                     <div className="flex items-center justify-between mb-4">
                       <div className="text-sm text-gray-600">{strings.questionNumber} #{(room.question_count || 0) + 1}</div>
                     </div>
-                    {room.game_mode === "cooperation" && (
-                      <>
-                        {/* Whose turn indicator */}
-                        <div className="mb-2">
-                          <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold text-base">
-                            {strings.turn}: {room.players.find(p => p.id === room.current_challenge_player)?.name || strings.partner}
-                          </span>
-                        </div>
-                        <CardTitle className="mobile-text-2xl mb-2 text-gray-900">
-                          {strings.translate}: <span className="text-blue-600">{cooperationChallenge?.englishName}</span>
-                        </CardTitle>
-                        <CardDescription className="text-gray-600">
-                          {strings.category}: {cooperationChallenge?.categoryName}
-                        </CardDescription>
-                      </>
-                    )}
                     {room.game_mode === "practice" && (
                       <CardTitle className="mobile-text-2xl mb-2 text-gray-900">
                         {currentPlayer?.language === "english" ? (
@@ -2661,295 +2605,201 @@ export default function RoomPage() {
                         )}
                       </CardTitle>
                     )}
-                    
-                    {/* Prominent typing indicator - always visible and centered */}
-                    {room.game_mode === "cooperation" && cooperationTyping && cooperationTyping.playerId !== playerId && (
-                      <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border-2 border-blue-200 shadow-lg">
-                  <div className="text-center">
-                          <p className="text-lg font-bold text-blue-800 mb-1">
-                            {room.players.find(p => p.id === cooperationTyping.playerId)?.name || strings.partner} {strings.isTyping}...
-                          </p>
-                          <p className="text-xl font-semibold text-gray-800 bg-white/80 rounded-xl p-2 border border-gray-200">
-                            "{cooperationTyping.text}"
-                          </p>
-                    </div>
-                  </div>
-                    )}
-                    
-                    {/* Time bank indicator for both players - only for cooperation */}
-                    {room.game_mode === "cooperation" && (
-                      <div className="flex justify-center gap-4 mt-2">
-                      {room.players.map((player) => (
-                          <span key={player.id} className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${player.id === room.current_challenge_player ? 'bg-blue-200 text-blue-900' : 'bg-gray-100 text-gray-600'}`}>
-                            <Timer className="h-3 w-3" />
-                            {player.name}: {player.timeBank || 0}s
-                          </span>
+                  </CardHeader>
+                  <CardContent className="mobile-padding">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {currentQuestion.options.map((option, index) => (
+                        <SoundButton
+                          key={index}
+                          onClick={() => handleAnswerSubmit(option)}
+                          disabled={isAnswering}
+                          className={`answer-option rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105 ${
+                            answerFeedback?.show 
+                              ? option === currentQuestion.correctAnswer 
+                                ? 'correct' 
+                                : option === answerFeedback.selectedAnswer 
+                                  ? 'incorrect' 
+                                  : ''
+                              : ''
+                          }`}
+                          style={{
+                            backgroundColor: answerFeedback?.show 
+                              ? option === currentQuestion.correctAnswer 
+                                ? '#4CAF50' 
+                                : option === answerFeedback.selectedAnswer 
+                                  ? '#F44336' 
+                                  : 'white'
+                              : 'white',
+                            color: answerFeedback?.show 
+                              ? option === currentQuestion.correctAnswer || option === answerFeedback.selectedAnswer
+                                ? 'white' 
+                                : 'black'
+                              : 'black',
+                            height: '80px',
+                            width: '85%',
+                            transition: 'all 0.5s ease-in-out',
+                            opacity: answerFeedback?.fadeOut ? 0.7 : 1,
+                            transform: answerFeedback?.fadeOut ? 'scale(0.98)' : 'scale(1)'
+                          }}
+                        >
+                          {option}
+                        </SoundButton>
                       ))}
                     </div>
-                    )}
-                </CardHeader>
-                  <CardContent className="mobile-padding">
-                    {room.game_mode === "practice" || room.game_mode === "competition" ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {currentQuestion.options.map((option, index) => (
-                          <SoundButton
-                            key={index}
-                            onClick={() => handleAnswerSubmit(option)}
-                            disabled={isAnswering}
-                              className={`answer-option rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105 ${
-                              answerFeedback?.show 
-                                ? option === currentQuestion.correctAnswer 
-                                  ? 'correct' 
-                                  : option === answerFeedback.selectedAnswer 
-                                    ? 'incorrect' 
-                                    : ''
-                                : ''
-                            }`}
-                            style={{
-                              backgroundColor: answerFeedback?.show 
-                                ? option === currentQuestion.correctAnswer 
-                                  ? '#4CAF50' 
-                                  : option === answerFeedback.selectedAnswer 
-                                    ? '#F44336' 
-                                    : 'white'
-                                : 'white',
-                              color: answerFeedback?.show 
-                                ? option === currentQuestion.correctAnswer || option === answerFeedback.selectedAnswer
-                                  ? 'white' 
-                                  : 'black'
-                                : 'black',
-                              height: '80px',
-                              width: '85%',
-                              transition: 'all 0.5s ease-in-out',
-                              opacity: answerFeedback?.fadeOut ? 0.7 : 1,
-                              transform: answerFeedback?.fadeOut ? 'scale(0.98)' : 'scale(1)'
-                            }}
-                          >
-                            {option}
-                          </SoundButton>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {/* Only show input bar for the active player and not waiting */}
-                        {room.current_challenge_player === playerId && !isCooperationWaiting && (
-                          <div>
-                            <label htmlFor="cooperationAnswer" className="block text-gray-900 font-medium mb-2">
-                              {strings.yourAnswer}:
-                            </label>
-                          <Input
-                            ref={inputRef}
-                              id="cooperationAnswer"
-                              type="text"
-                            value={cooperationAnswer}
-                              onChange={(e) => {
-                                setCooperationAnswer(e.target.value);
-                                handleCooperationTyping(e.target.value);
-                              }}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                handleCooperationAnswer();
-                              }
-                            }}
-                              placeholder={strings.typeYourAnswer}
-                              className="bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 rounded-2xl"
-                              disabled={isCooperationWaiting}
-                              autoComplete="off"
-                            />
-                        </div>
-                        )}
-
-                        <div className="flex gap-3">
-                          <SoundButton
-                            onClick={handleCooperationAnswer}
-                            disabled={!cooperationAnswer.trim() || isCooperationWaiting}
-                            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium transition-all duration-300 transform hover:scale-105 shadow-lg rounded-2xl"
-                          >
-                            {isCooperationWaiting ? strings.submitting : strings.submit}
-                          </SoundButton>
-                          
-                          {currentPlayer?.timeBank > 0 && (
-                            <div className="flex gap-2">
-                              <Select 
-                                value={donatedTimeAmount.toString()} 
-                                onValueChange={(value) => setDonatedTimeAmount(parseInt(value))}
-                              >
-                                <SelectTrigger className="w-20 border-gray-300 rounded-2xl">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Array.from({ length: Math.min(currentPlayer.timeBank, 10) }, (_, i) => i + 1).map(amount => (
-                                    <SelectItem key={amount} value={amount.toString()}>
-                                      {amount}s
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <SoundButton
-                                onClick={handleDonateTime}
-                                disabled={isDonating}
-                                variant="outline"
-                                className="border-gray-300 text-gray-700 hover:bg-gray-50 h-12 px-4 transition-all duration-300 rounded-2xl shadow-sm"
-                              >
-                                <Timer className="h-4 w-4 mr-2" />
-                                {strings.donateTime}
-                              </SoundButton>
-                            </div>
-                          )}
-                            </div>
-                      </div>
-                    )}
-
-                    {/* Answer feedback for practice/competition modes */}
-                    {answerFeedback?.show && (room.game_mode === "practice" || room.game_mode === "competition") && (
-                      <div className={`correct-answer-display mt-4 text-center transition-all duration-500 p-4 rounded-2xl shadow-lg ${
-                        answerFeedback.fadeOut ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'
-                      } animate-in fade-in slide-in-from-bottom-2 ${!answerFeedback.fadeOut ? 'animate-pulse' : ''} ${
-                        answerFeedback.isCorrect 
-                          ? 'bg-green-50 border-2 border-green-200 shadow-green-200' 
-                          : answerFeedback.selectedAnswer 
-                          ? 'bg-red-50 border-2 border-red-200 shadow-red-200' 
-                          : 'bg-orange-50 border-2 border-orange-200 shadow-orange-200'
-                      }`}>
-                        {answerFeedback.isCorrect ? (
-                          <span className="text-green-700 font-semibold text-lg">✅ {strings.correct} {strings.wellDone}!</span>
-                        ) : answerFeedback.selectedAnswer ? (
-                          <span className="text-red-700 font-semibold text-lg">❌ {strings.incorrect} {strings.youSelected}: <strong>{answerFeedback.selectedAnswer}</strong>. {strings.correctAnswerWas}: <strong>{answerFeedback.correctAnswer}</strong></span>
-                        ) : (
-                          <span className="text-orange-700 font-semibold text-lg">⏰ {strings.timesUp}! {strings.correctAnswerWas}: <strong>{answerFeedback.correctAnswer}</strong></span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Removed old fixed-position feedback */}
                   </CardContent>
                 </Card>
-            ) : isLoadingQuestion && room.game_mode !== "practice" ? (
+              ) : (
                 <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl">
-                <CardContent className="flex flex-col items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-                    <h3 className="mobile-text-lg font-semibold mb-2 text-gray-900">{strings.loadingQuestion}</h3>
-                  <p className="text-gray-600 text-center">{strings.pleaseWaitForQuestion}</p>
-                </CardContent>
-              </Card>
-            ) : (
-                <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl">
-                <CardContent className="flex flex-col items-center justify-center p-8">
-                  <Timer className="h-12 w-12 text-gray-400 mb-4" />
-                    <h3 className="mobile-text-lg font-semibold mb-2 text-gray-900">{strings.waitingForQuestion}</h3>
-                  <p className="text-gray-600 text-center">{strings.nextQuestionWillAppear}</p>
-                </CardContent>
-              </Card>
-            )}
+                  <CardContent className="mobile-padding text-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+                    <p className="text-gray-600 text-center">{strings.nextQuestionWillAppear}</p>
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Leaderboard */}
-            <div className="leaderboard-container">
-                <h3 className="mobile-text-lg font-semibold mb-4 text-center text-gray-900">{strings.leaderboard}</h3>
-              <div className="space-y-2">
-                {room.players
-                  .sort((a, b) => {
-                    if (room.game_mode === "cooperation") {
-                      // For cooperation, all players have the same score
-                      return 0;
-                    } else {
-                      // For competition, sort by individual scores
-                      return b.score - a.score;
-                    }
-                  })
-                  .map((player, index) => (
-                    <div
-                      key={player.id}
-                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 shadow-sm ${
-                          index === 0 
-                            ? 'bg-gradient-to-r from-yellow-100 to-amber-100 border-yellow-300' 
-                            : index === 1 
-                            ? 'bg-gradient-to-r from-gray-100 to-slate-100 border-gray-300' 
-                            : index === 2 
-                            ? 'bg-gradient-to-r from-orange-100 to-red-100 border-orange-300' 
-                            : 'bg-white/60 border-gray-200/50 hover:bg-white/80'
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 border-2 border-yellow-300">
-                          {index === 0 && <Trophy className="h-4 w-4 text-yellow-600" />}
-                            {index === 1 && <Star className="h-4 w-4 text-gray-600" />}
-                            {index === 2 && <Award className="h-4 w-4 text-orange-600" />}
-                            {index > 2 && <span className="text-sm font-bold text-gray-600">{index + 1}</span>}
+              {/* Practice Mode Feedback Section */}
+              {room.game_mode === "practice" && practiceCompetitionFeedback?.show && (
+                <div className="mt-6">
+                  <Card className="bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl">
+                    <CardContent className="p-6">
+                      <div className={`text-center transition-all duration-500 ${
+                        practiceCompetitionFeedback.fadeOut ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'
+                      }`}>
+                        {practiceCompetitionFeedback.type === 'correct' && (
+                          <div className="space-y-2">
+                            <div className="text-3xl font-bold text-green-600 mb-2">✅ {strings.correct}!</div>
+                            <div className="text-xl font-semibold text-green-700 mb-2">{practiceCompetitionFeedback.word}</div>
+                            <div className="text-lg font-bold text-green-600">+1 {strings.point}</div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`font-semibold mobile-text-base ${
-                              index === 0 ? 'text-yellow-800' : 'text-gray-900'
-                            }`}>
-                              {player.name}
-                            </span>
-                          {player.id === playerId && (
-                              <Badge variant="outline" className="text-xs bg-blue-100 border-blue-300 text-blue-800 rounded-full">
-                                {strings.you}
-                              </Badge>
-                            )}
-                            {player.is_host && (
-                              <Badge variant="outline" className="text-xs bg-purple-100 border-purple-300 text-purple-800 rounded-full">
-                                <Crown className="h-3 w-3 mr-1" />
-                                Host
-                              </Badge>
-                          )}
-                        </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                        {player.language && (
-                            <div className="flex items-center gap-1">
-                              <FlagIcon country={getCountryCode(player.language)} className="h-4 w-4" />
-                              <span className="text-sm text-gray-600">
-                            {GAME_LANGUAGES.find(l => l.value === player.language)?.label}
-                              </span>
+                        )}
+                        {practiceCompetitionFeedback.type === 'incorrect' && (
+                          <div className="space-y-2">
+                            <div className="text-3xl font-bold text-red-600 mb-2">❌ {strings.incorrect}</div>
+                            <div className="text-lg text-red-700 mb-2">{strings.youSelected}: <strong>{practiceCompetitionFeedback.selectedAnswer}</strong></div>
+                            <div className="text-lg text-green-700">{strings.correctAnswerWas}: <strong>{practiceCompetitionFeedback.correctAnswer}</strong></div>
+                          </div>
+                        )}
+                        {practiceCompetitionFeedback.type === 'timeout' && (
+                          <div className="space-y-2">
+                            <div className="text-3xl font-bold text-yellow-600 mb-2">⏰ {strings.timesUp}!</div>
+                            <div className="text-lg text-green-700">{strings.correctAnswerWas}: <strong>{practiceCompetitionFeedback.correctAnswer}</strong></div>
+                          </div>
+                        )}
                       </div>
-                          )}
-                          <Badge variant="outline" className={`mobile-text-sm font-bold rounded-full ${
-                            index === 0 
-                              ? 'bg-yellow-100 border-yellow-300 text-yellow-800' 
-                              : 'bg-gray-100 border-gray-300 text-gray-800'
-                          }`}>
-                            {room.game_mode === "cooperation" ? (room.cooperation_score || 0) : player.score} {strings.points}
-                          </Badge>
-                      </div>
-                    </div>
-                  ))}
-              </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
 
-            {/* Practice Mode Feedback Section */}
-            {room.game_mode === "practice" && practiceCompetitionFeedback?.show && (
-              <div className="mt-6">
-                <Card className="bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl">
-                  <CardContent className="p-6">
-                    <div className={`text-center transition-all duration-500 ${
-                      practiceCompetitionFeedback.fadeOut ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'
-                    }`}>
-                      {practiceCompetitionFeedback.type === 'correct' && (
-                        <div className="space-y-2">
-                          <div className="text-3xl font-bold text-green-600 mb-2">✅ {strings.correct}!</div>
-                          <div className="text-xl font-semibold text-green-700 mb-2">{practiceCompetitionFeedback.word}</div>
-                          <div className="text-lg font-bold text-green-600">+1 {strings.point}</div>
-                        </div>
-                      )}
-                      {practiceCompetitionFeedback.type === 'incorrect' && (
-                        <div className="space-y-2">
-                          <div className="text-3xl font-bold text-red-600 mb-2">❌ {strings.incorrect}</div>
-                          <div className="text-lg text-red-700 mb-2">{strings.youSelected}: <strong>{practiceCompetitionFeedback.selectedAnswer}</strong></div>
-                          <div className="text-lg text-green-700">{strings.correctAnswerWas}: <strong>{practiceCompetitionFeedback.correctAnswer}</strong></div>
-                        </div>
-                      )}
-                      {practiceCompetitionFeedback.type === 'timeout' && (
-                        <div className="space-y-2">
-                          <div className="text-3xl font-bold text-yellow-600 mb-2">⏰ {strings.timesUp}!</div>
-                          <div className="text-lg text-green-700">{strings.correctAnswerWas}: <strong>{practiceCompetitionFeedback.correctAnswer}</strong></div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+            {/* Sidebar Leaderboard */}
+            <div className="w-80 flex-shrink-0">
+              <Card className="bg-white/90 backdrop-blur-sm border-blue-200 shadow-xl rounded-3xl sticky top-6">
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="flex items-center justify-center gap-2 text-lg text-blue-800">
+                    <Trophy className="h-5 w-5" />
+                    {strings.leaderboard}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    {room.players
+                      .sort((a, b) => {
+                        if (room.game_mode === "cooperation") {
+                          // For cooperation, all players have the same score
+                          return 0;
+                        } else if (room.game_mode === "practice") {
+                          // For practice mode, sort by correct answers (current player uses local state)
+                          const aScore = a.id === playerId ? practiceCorrectAnswers : a.score;
+                          const bScore = b.id === playerId ? practiceCorrectAnswers : b.score;
+                          return bScore - aScore;
+                        } else {
+                          // For competition, sort by individual scores
+                          return b.score - a.score;
+                        }
+                      })
+                      .map((player, index) => {
+                        // Get the display score for each player
+                        const getDisplayScore = (player: Player) => {
+                          if (room.game_mode === "cooperation") {
+                            return room.cooperation_score || 0;
+                          } else if (room.game_mode === "practice") {
+                            // For practice mode, show correct answers
+                            if (player.id === playerId) {
+                              return practiceCorrectAnswers;
+                            } else {
+                              return player.score; // This should be updated via socket events
+                            }
+                          } else {
+                            return player.score;
+                          }
+                        };
+
+                        const displayScore = getDisplayScore(player);
+                        
+                        return (
+                          <div
+                            key={player.id}
+                            className={`flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 shadow-sm ${
+                              index === 0 
+                                ? 'bg-gradient-to-r from-yellow-100 to-amber-100 border-yellow-300' 
+                                : index === 1 
+                                ? 'bg-gradient-to-r from-gray-100 to-slate-100 border-gray-300' 
+                                : index === 2 
+                                ? 'bg-gradient-to-r from-orange-100 to-red-100 border-orange-300' 
+                                : 'bg-white/60 border-gray-200/50 hover:bg-white/80'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 border-2 border-yellow-300">
+                                {index === 0 && <Trophy className="h-3 w-3 text-yellow-600" />}
+                                {index === 1 && <Star className="h-3 w-3 text-gray-600" />}
+                                {index === 2 && <Award className="h-3 w-3 text-orange-600" />}
+                                {index > 2 && <span className="text-xs font-bold text-gray-600">{index + 1}</span>}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className={`font-semibold text-sm ${
+                                  index === 0 ? 'text-yellow-800' : 'text-gray-900'
+                                }`}>
+                                  {player.name}
+                                </span>
+                                {player.id === playerId && (
+                                  <Badge variant="outline" className="text-xs bg-blue-100 border-blue-300 text-blue-800 rounded-full">
+                                    {strings.you}
+                                  </Badge>
+                                )}
+                                {player.is_host && (
+                                  <Badge variant="outline" className="text-xs bg-purple-100 border-purple-300 text-purple-800 rounded-full">
+                                    <Crown className="h-2 w-2 mr-1" />
+                                    Host
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {player.language && (
+                                <div className="flex items-center gap-1">
+                                  <FlagIcon country={getCountryCode(player.language)} className="h-3 w-3" />
+                                  <span className="text-xs text-gray-600">
+                                    {GAME_LANGUAGES.find(l => l.value === player.language)?.label}
+                                  </span>
+                                </div>
+                              )}
+                              <Badge variant="outline" className={`text-xs font-bold rounded-full ${
+                                index === 0 
+                                  ? 'bg-yellow-100 border-yellow-300 text-yellow-800' 
+                                  : 'bg-gray-100 border-gray-300 text-gray-800'
+                              }`}>
+                                {room.game_mode === "practice" ? `${displayScore} correct` : `${displayScore} ${strings.points}`}
+                              </Badge>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
 
@@ -3202,7 +3052,7 @@ export default function RoomPage() {
                 <CardContent className="flex flex-col items-center justify-center p-8">
                   <Timer className="h-12 w-12 text-gray-400 mb-4" />
                     <h3 className="mobile-text-lg font-semibold mb-2 text-gray-900">{strings.waitingForQuestion}</h3>
-                    <p className="text-gray-600 text-center">{strings.nextQuestionWillAppear}</p>
+                  <p className="text-gray-600 text-center">{strings.nextQuestionWillAppear}</p>
                 </CardContent>
               </Card>
             )}

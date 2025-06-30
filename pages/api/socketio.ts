@@ -923,6 +923,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 playerId: playerId,
                 correctAnswer: "Practice session ended"
               });
+              
+              // Update room state to finished for all players
+              updateRoom(roomId, {
+                game_state: "finished"
+              }).then(async () => {
+                const updatedRoom = await getRoom(roomId);
+                io.to(roomId).emit("room-update", { room: updatedRoom });
+              }).catch(error => {
+                console.error(`❌ Error updating room state on practice timeout:`, error);
+              });
             }
           }, 1000);
           practiceTimers.set(roomId, { timeLeft, interval });
