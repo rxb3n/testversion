@@ -2541,6 +2541,7 @@ export default function RoomPage() {
                 )}
               </div>
             )}
+            
           </div>
         )}
 
@@ -2690,115 +2691,7 @@ export default function RoomPage() {
                   </Card>
                 </div>
               )}
-            </div>
-
-            {/* Sidebar Leaderboard */}
-            <div className="w-80 flex-shrink-0">
-              <Card className="bg-white/90 backdrop-blur-sm border-blue-200 shadow-xl rounded-3xl sticky top-6">
-                <CardHeader className="text-center pb-4">
-                  <CardTitle className="flex items-center justify-center gap-2 text-lg text-blue-800">
-                    <Trophy className="h-5 w-5" />
-                    {strings.leaderboard}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <div className="space-y-2">
-                    {room.players
-                      .sort((a, b) => {
-                        if (room.game_mode === "cooperation") {
-                          // For cooperation, all players have the same score
-                          return 0;
-                        } else if (room.game_mode === "practice") {
-                          // For practice mode, sort by correct answers (current player uses local state)
-                          const aScore = a.id === playerId ? practiceCorrectAnswers : a.score;
-                          const bScore = b.id === playerId ? practiceCorrectAnswers : b.score;
-                          return bScore - aScore;
-                        } else {
-                          // For competition, sort by individual scores
-                          return b.score - a.score;
-                        }
-                      })
-                      .map((player, index) => {
-                        // Get the display score for each player
-                        const getDisplayScore = (player: Player) => {
-                          if (room.game_mode === "cooperation") {
-                            return room.cooperation_score || 0;
-                          } else if (room.game_mode === "practice") {
-                            // For practice mode, show correct answers
-                            if (player.id === playerId) {
-                              return practiceCorrectAnswers;
-                            } else {
-                              return player.score; // This should be updated via socket events
-                            }
-                          } else {
-                            return player.score;
-                          }
-                        };
-
-                        const displayScore = getDisplayScore(player);
-                        
-                        return (
-                          <div
-                            key={player.id}
-                            className={`flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 shadow-sm ${
-                              index === 0 
-                                ? 'bg-gradient-to-r from-yellow-100 to-amber-100 border-yellow-300' 
-                                : index === 1 
-                                ? 'bg-gradient-to-r from-gray-100 to-slate-100 border-gray-300' 
-                                : index === 2 
-                                ? 'bg-gradient-to-r from-orange-100 to-red-100 border-orange-300' 
-                                : 'bg-white/60 border-gray-200/50 hover:bg-white/80'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 border-2 border-yellow-300">
-                                {index === 0 && <Trophy className="h-3 w-3 text-yellow-600" />}
-                                {index === 1 && <Star className="h-3 w-3 text-gray-600" />}
-                                {index === 2 && <Award className="h-3 w-3 text-orange-600" />}
-                                {index > 2 && <span className="text-xs font-bold text-gray-600">{index + 1}</span>}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className={`font-semibold text-sm ${
-                                  index === 0 ? 'text-yellow-800' : 'text-gray-900'
-                                }`}>
-                                  {player.name}
-                                </span>
-                                {player.id === playerId && (
-                                  <Badge variant="outline" className="text-xs bg-blue-100 border-blue-300 text-blue-800 rounded-full">
-                                    {strings.you}
-                                  </Badge>
-                                )}
-                                {player.is_host && (
-                                  <Badge variant="outline" className="text-xs bg-purple-100 border-purple-300 text-purple-800 rounded-full">
-                                    <Crown className="h-2 w-2 mr-1" />
-                                    Host
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {player.language && (
-                                <div className="flex items-center gap-1">
-                                  <FlagIcon country={getCountryCode(player.language)} className="h-3 w-3" />
-                                  <span className="text-xs text-gray-600">
-                                    {GAME_LANGUAGES.find(l => l.value === player.language)?.label}
-                                  </span>
-                                </div>
-                              )}
-                              <Badge variant="outline" className={`text-xs font-bold rounded-full ${
-                                index === 0 
-                                  ? 'bg-yellow-100 border-yellow-300 text-yellow-800' 
-                                  : 'bg-gray-100 border-gray-300 text-gray-800'
-                              }`}>
-                                {room.game_mode === "practice" ? `${displayScore} correct` : `${displayScore} ${strings.points}`}
-                              </Badge>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </CardContent>
-              </Card>
+              
             </div>
           </div>
         )}
@@ -3058,79 +2951,93 @@ export default function RoomPage() {
             )}
 
               {/* Cooperation Leaderboard */}
-              <div className="leaderboard-container">
-                <h3 className="mobile-text-lg font-semibold mb-4 text-center text-gray-900">{strings.teamProgress}</h3>
-                <div className="space-y-2">
-                  {room.players.map((player) => (
-                    <div
-                      key={player.id}
-                      className="flex items-center justify-between p-4 bg-white/60 rounded-2xl border border-gray-200/50 hover:bg-white/80 transition-all duration-300 shadow-sm"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold mobile-text-base text-gray-900">{player.name}</span>
-                          {player.id === playerId && (
-                            <Badge variant="outline" className="text-xs bg-blue-100 border-blue-300 text-blue-800 rounded-full">
-                              {strings.you}
-                            </Badge>
-                          )}
-                          {player.is_host && (
-                            <Badge variant="outline" className="text-xs bg-purple-100 border-purple-300 text-purple-800 rounded-full">
-                              <Crown className="h-3 w-3 mr-1" />
-                              Host
-                            </Badge>
-                          )}
-                        </div>
+              <div className="w-full mt-4 flex justify-center">
+                <div className="max-w-xl w-full">
+                  <Card className="bg-white/90 backdrop-blur-sm border-blue-200 shadow rounded-2xl">
+                    <CardHeader className="text-center pb-2">
+                      <CardTitle className="flex items-center justify-center gap-2 text-base text-blue-800">
+                        <Trophy className="h-4 w-4" />
+                        {strings.leaderboard}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-2">
+                      <div className="flex flex-col gap-1">
+                        {room.players
+                          .sort((a, b) => {
+                            if (room.game_mode === "cooperation") {
+                              return 0;
+                            } else if (room.game_mode === "practice") {
+                              const aScore = a.id === playerId ? practiceCorrectAnswers : a.score;
+                              const bScore = b.id === playerId ? practiceCorrectAnswers : b.score;
+                              return bScore - aScore;
+                            } else {
+                              return b.score - a.score;
+                            }
+                          })
+                          .map((player, index) => {
+                            const getDisplayScore = (player) => {
+                              if (room.game_mode === "cooperation") {
+                                return room.cooperation_score || 0;
+                              } else if (room.game_mode === "practice") {
+                                if (player.id === playerId) {
+                                  return practiceCorrectAnswers;
+                                } else {
+                                  return player.score;
+                                }
+                              } else {
+                                return player.score;
+                              }
+                            };
+                            const displayScore = getDisplayScore(player);
+                            return (
+                              <div
+                                key={player.id}
+                                className={`flex flex-wrap items-center justify-between px-2 py-1 rounded-xl border transition-all duration-300 shadow-sm text-xs gap-2 ${
+                                  index === 0
+                                    ? 'bg-gradient-to-r from-yellow-100 to-amber-100 border-yellow-300'
+                                    : index === 1
+                                    ? 'bg-gradient-to-r from-gray-100 to-slate-100 border-gray-300'
+                                    : index === 2
+                                    ? 'bg-gradient-to-r from-orange-100 to-red-100 border-orange-300'
+                                    : 'bg-white/60 border-gray-200/50 hover:bg-white/80'
+                                }`}
+                                style={{wordBreak: 'break-word'}}
+                              >
+                                <div className="flex items-center gap-1 min-w-0">
+                                  <div className="flex items-center justify-center w-5 h-5 rounded-full bg-yellow-100 border-2 border-yellow-300">
+                                    {index === 0 && <Trophy className="h-3 w-3 text-yellow-600" />}
+                                    {index === 1 && <Star className="h-3 w-3 text-gray-600" />}
+                                    {index === 2 && <Award className="h-3 w-3 text-orange-600" />}
+                                    {index > 2 && <span className="text-xs font-bold text-gray-600">{index + 1}</span>}
+                                  </div>
+                                  <span className={`font-semibold truncate ${index === 0 ? 'text-yellow-800' : 'text-gray-900'}`}>{player.name}</span>
+                                  {player.id === playerId && (
+                                    <Badge variant="outline" className="text-xxs bg-blue-100 border-blue-300 text-blue-800 rounded-full px-1 py-0.5 ml-1">
+                                      {strings.you}
+                                    </Badge>
+                                  )}
+                                  {player.language && (
+                                    <span className="flex items-center gap-1 ml-1">
+                                      <FlagIcon country={getCountryCode(player.language)} className="h-3 w-3" />
+                                      <span className="text-xs text-gray-600 truncate">
+                                        {GAME_LANGUAGES.find(l => l.value === player.language)?.label}
+                                      </span>
+                                    </span>
+                                  )}
+                                </div>
+                                <Badge variant="outline" className={`text-xs font-bold rounded-full px-2 py-0.5 ${
+                                  index === 0
+                                    ? 'bg-yellow-100 border-yellow-300 text-yellow-800'
+                                    : 'bg-gray-100 border-gray-300 text-gray-800'
+                                }`}>
+                                  {room.game_mode === "practice" ? `${displayScore} correct` : `${displayScore} ${strings.points}`}
+                                </Badge>
+                              </div>
+                            );
+                          })}
                       </div>
-                      <div className="flex items-center gap-3">
-                        {player.language && (
-                          <div className="flex items-center gap-1">
-                            <FlagIcon country={getCountryCode(player.language)} className="h-4 w-4" />
-                            <span className="text-sm text-gray-600">
-                            {GAME_LANGUAGES.find(l => l.value === player.language)?.label}
-                            </span>
-                          </div>
-                        )}
-                        <Badge variant="outline" className="mobile-text-sm font-bold bg-gray-100 border-gray-300 text-gray-800 rounded-full">
-                          {player.timeBank}s {strings.timeBank}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Removed purple team score box */}
-                
-                {/* Centered time share button */}
-                <div className="flex justify-center mt-4">
-                  {currentPlayer?.timeBank > 0 && room.current_challenge_player !== playerId && (
-                    <div className="flex gap-2">
-                      <Select 
-                        value={donatedTimeAmount.toString()} 
-                        onValueChange={(value) => setDonatedTimeAmount(parseInt(value))}
-                      >
-                        <SelectTrigger className="w-20 border-gray-300 rounded-2xl">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: Math.min(currentPlayer.timeBank, 10) }, (_, i) => i + 1).map(amount => (
-                            <SelectItem key={amount} value={amount.toString()}>
-                              {amount}s
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <SoundButton
-                        onClick={handleDonateTime}
-                        disabled={isDonating}
-                        variant="outline"
-                        className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-3 transition-all duration-300 rounded-2xl shadow-sm"
-                      >
-                        <Timer className="h-4 w-4 mr-2" />
-                        {strings.donateTime}
-                      </SoundButton>
-                    </div>
-                  )}
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
 
