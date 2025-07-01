@@ -2652,6 +2652,37 @@ export default function RoomPage() {
                       </Card>
                     </div>
                   </div>
+                                    {/* Competition Mode Feedback Section */}
+                  {room.game_mode === "competition" && competitionFeedback?.show && (
+                    <div className="fixed inset-0 flex items-start justify-center z-40 pointer-events-none" style={{ top: '30%' }}>
+                      <div className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto">
+                        <Card className="bg-white/90 border-gray-200/70 backdrop-blur-lg shadow-2xl rounded-3xl">
+                          <CardContent className="p-6">
+                            <div className={`text-center transition-all duration-500 ${competitionFeedback.fadeOut ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'}`}>
+                              {competitionFeedback.type === 'correct' && (
+                                <div className="space-y-2">
+                                  <div className="text-3xl font-bold text-green-600 mb-2">✅ Correct! +{competitionFeedback.points}</div>
+                                  <div className="text-xl font-semibold text-green-700 mb-2">{competitionFeedback.correctAnswer}</div>
+                                </div>
+                              )}
+                              {competitionFeedback.type === 'incorrect' && (
+                                <div className="space-y-2">
+                                  <div className="text-3xl font-bold text-red-600 mb-2">❌ Wrong answer! -5</div>
+                                  <div className="text-lg text-green-700">Correct answer: <strong>{competitionFeedback.correctAnswer}</strong></div>
+                                </div>
+                              )}
+                              {competitionFeedback.type === 'timeout' && (
+                                <div className="space-y-2">
+                                  <div className="text-3xl font-bold text-yellow-600 mb-2">⏰ Time's up! -5</div>
+                                  <div className="text-lg text-green-700">Correct answer: <strong>{competitionFeedback.correctAnswer}</strong></div>
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+                  )}
                 )}
               </div>
               {/* Leaderboard Section - below on mobile, side on desktop */}
