@@ -584,7 +584,7 @@ export default function HomePage() {
               {/* Main Game Controls */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Player Setup */}
-                <Card className="bg-gradient-to-br from-blue-200/95 via-blue-50/95 to-white/95 shadow-2xl rounded-full border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center">
+                <Card className="bg-gradient-to-br from-blue-200/95 via-blue-50/95 to-white/95 shadow-2xl rounded-3xl border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center">
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-xl md:text-2xl flex items-center justify-center gap-3">
                       <div className="w-8 h-8 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -648,7 +648,7 @@ export default function HomePage() {
             </Card>
 
                 {/* Available Rooms */}
-                <Card className="bg-gradient-to-br from-blue-200/95 via-blue-50/95 to-white/95 shadow-2xl rounded-full border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center">
+                <Card className="bg-gradient-to-br from-blue-200/95 via-blue-50/95 to-white/95 shadow-2xl rounded-3xl border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center">
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-xl md:text-2xl flex items-center justify-center gap-3">
                       <div className="w-8 h-8 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -727,7 +727,7 @@ export default function HomePage() {
               {/* Sidebar */}
               <div className="space-y-6">
             {/* Game Info */}
-                <Card className="bg-gradient-to-br from-blue-200/95 via-blue-50/95 to-white/95 shadow-2xl rounded-full border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center">
+                <Card className="bg-gradient-to-br from-blue-200/95 via-blue-50/95 to-white/95 shadow-2xl rounded-3xl border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center">
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-lg flex items-center justify-center gap-3">
                       <div className="w-6 h-6 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
