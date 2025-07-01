@@ -259,6 +259,9 @@ export default function RoomPage() {
   // Add rules collapse state
   const [rulesCollapsed, setRulesCollapsed] = useState(true);
 
+  // Add at the top level of the RoomPage component:
+  const [lobbyTab, setLobbyTab] = useState<'main' | 'rules'>('main');
+
   // Validate required parameters
   useEffect(() => {
     if (!roomId || !playerId || !playerName) {
