@@ -2143,7 +2143,7 @@ export default function RoomPage() {
   )}
 
   return (
-    <div className={`min-h-screen relative overflow-hidden ${gradientClass} transition-all duration-1000 ${showLoadingTransition ? 'opacity-0' : 'opacity-100'}`}>
+    <div className={`min-h-screen relative overflow-hidden transition-all duration-1000 ${showLoadingTransition ? 'bg-black' : gradientClass}`}>
       {/* Static Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className={`absolute inset-0 transition-all duration-700 ease-in-out ${
