@@ -872,20 +872,6 @@ export default function RoomPage() {
       if (answeringPlayer) {
         // Defensive: ensure timeLimit and timeLeft are numbers
         const cq = currentQuestionRef.current;
-        const timeLimit = cq && typeof cq.timeLimit === 'number' && !isNaN(cq.timeLimit) ? cq.timeLimit : 10;
-        const timeUsed = typeof timeLeft === 'number' && !isNaN(timeLeft) ? timeLeft : 0;
-        const points = Math.max(1, 10 - (timeLimit - timeUsed));
-        console.log('🏆 Awarding points:', points, 'to player:', playerId, 'timeLimit:', timeLimit, 'timeLeft:', timeUsed);
-        setRoom((prevRoom: Room | null) => {
-          if (!prevRoom) return prevRoom;
-          return {
-            ...prevRoom,
-            players: prevRoom.players.map(p => {
-              const safeScore = typeof p.score === 'number' && !isNaN(p.score) ? p.score : 0;
-              return p.id === playerId ? { ...p, score: safeScore + points } : p;
-            })
-          };
-        });
         setCompetitionFeedback({
           show: true,
           type: 'correct',
@@ -916,6 +902,14 @@ export default function RoomPage() {
           playerName: answeringPlayer.name,
           fadeOut: false
         });
+        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = setTimeout(() => {
+          setCompetitionFeedback((fb: typeof competitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
+          setTimeout(() => setCompetitionFeedback(null), 500);
+          setCurrentQuestion(null);
+          setSelectedAnswer("");
+          setIsAnswering(false);
+        }, 1000);
       }
     });
 
@@ -929,6 +923,14 @@ export default function RoomPage() {
           playerName: timeoutPlayer.name,
           fadeOut: false
         });
+        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = setTimeout(() => {
+          setCompetitionFeedback((fb: typeof competitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
+          setTimeout(() => setCompetitionFeedback(null), 500);
+          setCurrentQuestion(null);
+          setSelectedAnswer("");
+          setIsAnswering(false);
+        }, 1000);
       }
     });
 
