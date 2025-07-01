@@ -1317,8 +1317,8 @@ export default function RoomPage() {
               if (prev <= 1) {
                 clearInterval(timerRef.current!);
                 timerRef.current = null;
-                // Auto-submit when time runs out
-                handleAnswerSubmit("", true);
+                // Handle timeout directly for competition mode
+                handleCompetitionTimeout();
                 return 0;
               }
               return prev - 1;
@@ -1466,6 +1466,52 @@ export default function RoomPage() {
       setTimeout(() => setError(null), 3000);
       setLastTypedAnswer(normalizedAnswer); // Store last attempt for suggestion
     }
+  };
+
+  // Competition timeout handler - shows feedback immediately when timer reaches 0
+  const handleCompetitionTimeout = () => {
+    console.log('[COMPETITION TIMEOUT] Timer reached 0, showing timeout feedback immediately');
+    if (!currentQuestionRef.current || !socket) return;
+    
+    // Show timeout feedback immediately
+    setCompetitionFeedback({
+      show: true,
+      type: 'timeout',
+      correctAnswer: currentQuestionRef.current.correctAnswer,
+      points: -5,
+      fadeOut: false
+    });
+    
+    // Clear feedback after 1.25 seconds and load next question
+    if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+    feedbackTimeoutRef.current = setTimeout(() => {
+      console.log('[COMPETITION TIMEOUT] Fading out timeout feedback');
+      setCompetitionFeedback((fb: any) => fb ? { ...fb, fadeOut: true } : null);
+      setTimeout(() => {
+        setCompetitionFeedback(null);
+        setCurrentQuestion(null);
+        setSelectedAnswer("");
+        setIsAnswering(false);
+        console.log('[COMPETITION TIMEOUT] Loading next question after timeout feedback');
+        if (roomRef.current && roomRef.current.game_mode === "competition" && roomRef.current.game_state !== "finished") {
+          setTimeout(() => loadQuestion(roomRef.current!), 100);
+        }
+      }, 250);
+    }, 1250);
+    
+    // Also send timeout to server for score tracking
+    socket.emit("answer", {
+      roomId,
+      playerId,
+      data: {
+        questionId: currentQuestionRef.current.questionId,
+        answer: "",
+        isCorrect: false,
+        timeLeft: 0,
+        isTimeout: true,
+        correctAnswer: currentQuestionRef.current.correctAnswer
+      }
+    }, () => {});
   };
 
   // Cooperation timeout handler with life reduction and turn switching
