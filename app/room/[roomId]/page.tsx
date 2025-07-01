@@ -1983,51 +1983,6 @@ export default function RoomPage() {
   };
 
   // ... existing code ...
-  {/* MOBILE TABS FOR LOBBY */}
-  <div className="block sm:hidden w-full max-w-2xl mx-auto mb-4">
-    <div className="flex border-b border-gray-200">
-      <button
-        className={`flex-1 py-2 text-center font-semibold ${lobbyTab === 'main' ? 'border-b-2 border-blue-500 text-blue-700' : 'text-gray-500'}`}
-        onClick={() => setLobbyTab('main')}
-      >
-        {strings.players} & {strings.gameModes}
-      </button>
-      <button
-        className={`flex-1 py-2 text-center font-semibold ${lobbyTab === 'rules' ? 'border-b-2 border-blue-500 text-blue-700' : 'text-gray-500'}`}
-        onClick={() => setLobbyTab('rules')}
-      >
-        {strings.gameRules}
-      </button>
-    </div>
-  </div>
-
-  {/* Main Tab: Players and Game Modes */}
-  {lobbyTab === 'main' && (
-    <div className="block sm:hidden">
-      {/* Players List */}
-      {/* ...existing players list code... */}
-      {/* Game Mode Selection */}
-      {/* ...existing game mode selection code... */}
-      {/* Game Settings, Language Selection, etc. */}
-      {/* ...existing code... */}
-    </div>
-  )}
-
-  {/* Rules Tab */}
-  {lobbyTab === 'rules' && (
-    <div className="block sm:hidden">
-      {/* Rules Section - Collapsible */}
-      {/* ...existing rules section code... */}
-    </div>
-  )}
-
-  {/* Desktop: Show all sections as before */}
-  <div className="hidden sm:block">
-    {/* Players List, Game Modes, Rules, etc. */}
-    {/* ...existing code... */}
-  </div>
-  // ... existing code ...
-
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
       {/* Static Animated Background */}
@@ -2652,37 +2607,37 @@ export default function RoomPage() {
                       </Card>
                     </div>
                   </div>
-                                    {/* Competition Mode Feedback Section */}
-                  {room.game_mode === "competition" && competitionFeedback?.show && (
-                    <div className="fixed inset-0 flex items-start justify-center z-40 pointer-events-none" style={{ top: '30%' }}>
-                      <div className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto">
-                        <Card className="bg-white/90 border-gray-200/70 backdrop-blur-lg shadow-2xl rounded-3xl">
-                          <CardContent className="p-6">
-                            <div className={`text-center transition-all duration-500 ${competitionFeedback.fadeOut ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'}`}>
-                              {competitionFeedback.type === 'correct' && (
-                                <div className="space-y-2">
-                                  <div className="text-3xl font-bold text-green-600 mb-2">✅ Correct! +{competitionFeedback.points}</div>
-                                  <div className="text-xl font-semibold text-green-700 mb-2">{competitionFeedback.correctAnswer}</div>
-                                </div>
-                              )}
-                              {competitionFeedback.type === 'incorrect' && (
-                                <div className="space-y-2">
-                                  <div className="text-3xl font-bold text-red-600 mb-2">❌ Wrong answer! -5</div>
-                                  <div className="text-lg text-green-700">Correct answer: <strong>{competitionFeedback.correctAnswer}</strong></div>
-                                </div>
-                              )}
-                              {competitionFeedback.type === 'timeout' && (
-                                <div className="space-y-2">
-                                  <div className="text-3xl font-bold text-yellow-600 mb-2">⏰ Time's up! -5</div>
-                                  <div className="text-lg text-green-700">Correct answer: <strong>{competitionFeedback.correctAnswer}</strong></div>
-                                </div>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
+                                  {/* Competition Mode Feedback Section */}
+                {room.game_mode === "competition" && competitionFeedback?.show && (
+                  <div className="fixed inset-0 flex items-start justify-center z-40 pointer-events-none" style={{ top: '30%' }}>
+                    <div className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto">
+                      <Card className="bg-white/90 border-gray-200/70 backdrop-blur-lg shadow-2xl rounded-3xl">
+                        <CardContent className="p-6">
+                          <div className={`text-center transition-all duration-500 ${competitionFeedback.fadeOut ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'}`}>
+                            {competitionFeedback.type === 'correct' && (
+                              <div className="space-y-2">
+                                <div className="text-3xl font-bold text-green-600 mb-2">✅ Correct! +{competitionFeedback.points}</div>
+                                <div className="text-xl font-semibold text-green-700 mb-2">{competitionFeedback.correctAnswer}</div>
+                              </div>
+                            )}
+                            {competitionFeedback.type === 'incorrect' && (
+                              <div className="space-y-2">
+                                <div className="text-3xl font-bold text-red-600 mb-2">❌ Wrong answer! -5</div>
+                                <div className="text-lg text-green-700">Correct answer: <strong>{competitionFeedback.correctAnswer}</strong></div>
+                              </div>
+                            )}
+                            {competitionFeedback.type === 'timeout' && (
+                              <div className="space-y-2">
+                                <div className="text-3xl font-bold text-yellow-600 mb-2">⏰ Time's up! -5</div>
+                                <div className="text-lg text-green-700">Correct answer: <strong>{competitionFeedback.correctAnswer}</strong></div>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                  )}
+                  </div>
+                )}
                 )}
               </div>
               {/* Leaderboard Section - below on mobile, side on desktop */}
