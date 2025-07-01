@@ -472,7 +472,7 @@ export default function HomePage() {
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-200 via-cyan-100 to-blue-400">
       {/* Static Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50 to-white"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-200 via-cyan-100 to-blue-400"></div>
         
         {/* Static Floating Language Characters */}
         {Object.entries(BACKGROUND_CHARS).map(([lang, chars]) => 

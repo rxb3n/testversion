@@ -2097,7 +2097,11 @@ export default function RoomPage() {
             ? 'bg-gradient-to-br from-green-50 via-green-100 to-green-50' 
             : practiceBackgroundPulse === 'incorrect'
             ? 'bg-gradient-to-br from-red-50 via-red-100 to-red-50'
-            : 'bg-gradient-to-br from-white via-blue-50 to-white'
+            : room?.game_state === 'playing'
+              ? 'bg-gradient-to-br from-blue-900 via-blue-950 to-indigo-950'
+              : room?.game_state === 'lobby'
+                ? 'bg-gradient-to-br from-blue-400 via-blue-600 to-indigo-800'
+                : 'bg-gradient-to-br from-white via-blue-50 to-white'
         }`}></div>
         {Object.entries(BACKGROUND_CHARS).map(([lang, chars]) =>
           chars.map((char, index) => {
