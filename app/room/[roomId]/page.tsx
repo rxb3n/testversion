@@ -1080,19 +1080,19 @@ export default function RoomPage() {
       setCompetitionFeedback(null); // Clear competition feedback for new game
       setPracticeCompetitionFeedback(null); // Clear practice/competition feedback for new game
       setIsFirstQuestion(true); // Reset first question flag
-      
+      // Reset timer-related state
+      setPracticeTimer(60);
+      setPracticeTimerActive(false);
+      setPracticeFirstAnswerSubmitted(false);
       // Initialize practice mode timer
       if (updatedRoom.game_mode === "practice") {
         console.log("🎮 Practice mode game started - initializing state");
-        setPracticeTimer(60);
         setPracticeWordsAnswered(0);
         setPracticeCorrectAnswers(0);
         setPracticeIncorrectAnswers(0);
         setPracticeAccuracy(0);
         setPracticeBackgroundPulse(null);
-        setPracticeFirstAnswerSubmitted(false);
         // Don't start timer yet - wait for first answer
-        
         // Load first question for practice mode
         setTimeout(() => {
           loadQuestion(updatedRoom);
@@ -1114,19 +1114,19 @@ export default function RoomPage() {
       setCompetitionFeedback(null);
       setPracticeCompetitionFeedback(null); // Clear practice/competition feedback for new game
       setIsFirstQuestion(true); // Reset first question flag
-      
+      // Reset timer-related state
+      setPracticeTimer(60);
+      setPracticeTimerActive(false);
+      setPracticeFirstAnswerSubmitted(false);
       // Initialize practice mode timer
       if (updatedRoom.game_mode === "practice") {
         console.log("🔄 Practice mode room restarted - initializing state");
-        setPracticeTimer(60);
         setPracticeWordsAnswered(0);
         setPracticeCorrectAnswers(0);
         setPracticeIncorrectAnswers(0);
         setPracticeAccuracy(0);
         setPracticeBackgroundPulse(null);
-        setPracticeFirstAnswerSubmitted(false);
         // Don't start timer yet - wait for first answer
-        
         // Load first question for practice mode
         setTimeout(() => {
           loadQuestion(updatedRoom);
@@ -1544,7 +1544,7 @@ export default function RoomPage() {
           isPracticeMode: true,
           points: isCorrect ? 1 : 0
         }
-      });
+      }, () => {});
       
       // Clear current question and selected answer
       setCurrentQuestion(null);
@@ -1642,7 +1642,7 @@ export default function RoomPage() {
         timeLeft: currentTimeLeft,
         isTimeout: isTimeout
       }
-    });
+    }, () => {});
     
     // Clear current question and selected answer
     setCurrentQuestion(null);
