@@ -1576,7 +1576,8 @@ export default function RoomPage() {
           answer: answer,
           isCorrect: isCorrect,
           timeLeft: currentTimeLeft,
-          isTimeout: isTimeout
+          isTimeout: isTimeout,
+          correctAnswer: currentQuestion.correctAnswer // <-- FIXED: send correct answer
         }
       }, () => {});
       return;
