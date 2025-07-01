@@ -2605,9 +2605,11 @@ export default function RoomPage() {
                       <div className="flex flex-col items-center w-full">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl mx-auto">
                           {currentQuestion.options.map((option, index) => {
-                            let highlightClass = 'bg-white text-black';
+                            let highlightClass = '';
                             if (room.game_mode === "competition") {
+                              // Default: blue background, bold white text
                               highlightClass = 'bg-blue-500 text-white font-bold';
+                              // After answering, show feedback
                               if (competitionFeedback?.show) {
                                 if (option === currentQuestion.correctAnswer) {
                                   highlightClass = 'bg-green-500 text-white font-bold';
@@ -2621,6 +2623,8 @@ export default function RoomPage() {
                               } else {
                                 highlightClass = 'bg-red-500 text-white';
                               }
+                            } else {
+                              highlightClass = 'bg-white text-black';
                             }
                             return (
                               <SoundButton
