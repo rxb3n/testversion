@@ -584,7 +584,7 @@ export default function HomePage() {
               {/* Main Game Controls */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Player Setup */}
-                <Card className="bg-gradient-to-br from-blue-400 via-blue-100 to-white shadow-2xl rounded-full border-none px-6 py-8 min-h-[180px] md:min-h-[220px]">
+                <Card className="bg-gradient-to-br from-blue-500 via-blue-100 to-white shadow-2xl rounded-full border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center">
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-xl md:text-2xl flex items-center justify-center gap-3">
                       <div className="w-8 h-8 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -648,7 +648,7 @@ export default function HomePage() {
             </Card>
 
                 {/* Available Rooms */}
-                <Card className="bg-gradient-to-br from-blue-400 via-blue-100 to-white shadow-2xl rounded-full border-none px-6 py-8 min-h-[180px] md:min-h-[220px]">
+                <Card className="bg-gradient-to-br from-blue-500 via-blue-100 to-white shadow-2xl rounded-full border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center">
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-xl md:text-2xl flex items-center justify-center gap-3">
                       <div className="w-8 h-8 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -656,7 +656,7 @@ export default function HomePage() {
                       </div>
                   <span className="hidden sm:inline">{strings.availableRooms}</span>
                   <span className="sm:hidden">{strings.rooms}</span>
-                      <Badge className="bg-blue-600 text-white rounded-full">{availableRooms.length}</Badge>
+                      <Badge variant="outline" className="border-blue-600 text-blue-600 bg-white/80 rounded-full">{availableRooms.length}</Badge>
                 </CardTitle>
                     <CardDescription className="text-gray-600">
                       {strings.joinExistingRooms}
@@ -727,7 +727,7 @@ export default function HomePage() {
               {/* Sidebar */}
               <div className="space-y-6">
             {/* Game Info */}
-                <Card className="bg-gradient-to-br from-blue-400 via-blue-100 to-white shadow-2xl rounded-full border-none px-6 py-8 min-h-[180px] md:min-h-[220px]">
+                <Card className="bg-gradient-to-br from-blue-500 via-blue-100 to-white shadow-2xl rounded-full border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center">
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-lg flex items-center justify-center gap-3">
                       <div className="w-6 h-6 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -778,7 +778,7 @@ export default function HomePage() {
                       <p className="font-medium text-gray-900 mb-3">{strings.languages}</p>
                       <div className="flex flex-wrap gap-2">
                     {LANGUAGES.map((lang) => (
-                          <Badge key={lang.value} variant="outline" className="border-gray-300 text-gray-700 flex items-center gap-1 rounded-full">
+                          <Badge key={lang.value} variant="outline" className="border-gray-300 text-gray-700 flex items-center gap-1 rounded-full bg-white/80">
                         <FlagIcon country={lang.country} size="sm" />
                         {lang.label}
                       </Badge>
