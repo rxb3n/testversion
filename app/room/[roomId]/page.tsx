@@ -269,6 +269,17 @@ export default function RoomPage() {
     // Add loading transition state
     const [showLoadingTransition, setShowLoadingTransition] = useState(false);
 
+      // Add fade overlay state
+  const [showFadeOverlay, setShowFadeOverlay] = useState(true);
+
+  // Fade overlay effect
+  useEffect(() => {
+    if (room?.game_state === 'lobby' || room?.game_state === 'playing') {
+      setShowFadeOverlay(true);
+      setTimeout(() => setShowFadeOverlay(false), 500); // 0.5s fade
+    }
+  }, [room?.game_state]);
+
       // Add useEffect to trigger the transition when entering the lobby
   useEffect(() => {
     if (room?.game_state === 'lobby' && !showLoadingTransition) {
@@ -2106,16 +2117,7 @@ export default function RoomPage() {
   const floatSpeed = isLobby ? 25 : 30; // slower than before but still faster than home
   const letterColor = isLobby || isPlaying ? 'text-white/40' : 'text-black/20';
 
-  // Add fade overlay state
-  const [showFadeOverlay, setShowFadeOverlay] = useState(true);
 
-  // Fade overlay effect
-  useEffect(() => {
-    if (room?.game_state === 'lobby' || room?.game_state === 'playing') {
-      setShowFadeOverlay(true);
-      setTimeout(() => setShowFadeOverlay(false), 500); // 0.5s fade
-    }
-  }, [room?.game_state]);
 
   // Overlay for seamless loading transition
   {showLoadingTransition && (
