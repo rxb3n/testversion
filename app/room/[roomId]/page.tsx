@@ -2074,48 +2074,33 @@ export default function RoomPage() {
           </div>
         </div>
 
-        {/* Score Display - Prominent at top of screen */}
-        {room.game_state === "playing" && currentPlayer && (
-          <div className="mb-6 text-center">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-4 shadow-lg">
-              <div className="flex items-center justify-center gap-3">
-                <Trophy className="h-8 w-8 text-yellow-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">{strings.yourScore}</p>
-                  <p className="text-4xl md:text-5xl font-bold text-blue-700">
-                    {room.game_mode === "cooperation" 
-                      ? room.cooperation_score || 0 
-                      : currentPlayer.score
-                    }
-                  </p>
-                  {room.game_mode !== "cooperation" && room.game_mode !== "practice" && (
-                    <>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {strings.target}: {room.target_score}
-                      </p>
-                      <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-500"
-                          style={{
-                            width: `${Math.min(100, (currentPlayer.score / room.target_score) * 100)}%`
-                          }}
-                        ></div>
-                      </div>
-                    </>
-                  )}
-                </div>
-                {room.game_mode === "cooperation" && (
-                  <div className="flex items-center gap-2">
-                    <Heart className="h-6 w-6 text-red-500" />
-                    <span className="text-lg font-semibold text-red-600">
-                      {room.cooperation_lives || 3}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
+        {/* Top Bar with Room Info, Timer, and Score */}
+        <div className="w-full flex flex-row items-center justify-between px-6 py-3 bg-white/70 shadow-sm rounded-b-3xl mb-6">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-blue-900 text-lg">Room {roomId}</span>
+            {isHost && <Badge className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-300"> <Crown className="h-4 w-4 mr-1 inline" /> Host</Badge>}
           </div>
-        )}
+          {room.game_mode === "practice" && room.game_state === "playing" ? (
+            <div className="flex items-center gap-2 bg-blue-50 border-2 border-blue-200 rounded-2xl px-4 py-1 shadow">
+              <Clock className="h-6 w-6 text-blue-600" />
+              <span className="text-2xl font-bold text-blue-700">{practiceTimer}s</span>
+              <span className="text-sm text-gray-600 ml-2">{strings.timeRemaining}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Trophy className="h-6 w-6 text-yellow-600" />
+              <span className="text-2xl font-bold text-yellow-700">{currentPlayer?.score ?? 0}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <span className="text-green-700 text-xs font-semibold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-green-400 inline-block"></span> Connected
+            </span>
+            <Button variant="ghost" size="icon" className="ml-2">
+              <RotateCcw className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
 
         {/* Error Display */}
         {error && (
@@ -2543,13 +2528,13 @@ export default function RoomPage() {
               <div className="flex-1 min-w-0">
                 {/* Question Card */}
                 {currentQuestion ? (
-                  <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl">
-                    <CardHeader className="mobile-padding text-center">
-                      <div className="flex items-center justify-between mb-4">
+                  <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl max-w-md mx-auto">
+                    <CardHeader className="mobile-padding text-center p-4">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="text-sm text-gray-600">{strings.questionNumber} #{(room.question_count || 0) + 1}</div>
                       </div>
                       {room.game_mode === "practice" && (
-                        <CardTitle className="mobile-text-2xl mb-2 text-gray-900">
+                        <CardTitle className="mobile-text-xl mb-2 text-gray-900">
                           {currentPlayer?.language === "english" ? (
                             <>
                               {strings.translateToEnglish}: <span className="text-blue-600">{currentQuestion.english}</span>
@@ -2562,7 +2547,7 @@ export default function RoomPage() {
                         </CardTitle>
                       )}
                       {room.game_mode === "competition" && (
-                        <CardTitle className="mobile-text-2xl mb-2 text-gray-900">
+                        <CardTitle className="mobile-text-xl mb-2 text-gray-900">
                           {room.host_language === "english" ? (
                             <>
                               {strings.translateToEnglish}: <span className="text-blue-600">{currentQuestion.english}</span>
@@ -2575,45 +2560,33 @@ export default function RoomPage() {
                         </CardTitle>
                       )}
                     </CardHeader>
-                    <CardContent className="mobile-padding">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {currentQuestion.options.map((option, index) => (
-                          <SoundButton
-                            key={index}
-                            onClick={() => handleAnswerSubmit(option)}
-                            disabled={isAnswering}
-                            className={`answer-option rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105 ${
-                              answerFeedback?.show 
-                                ? option === currentQuestion.correctAnswer 
-                                  ? 'correct' 
-                                  : option === answerFeedback.selectedAnswer 
-                                    ? 'incorrect' 
-                                    : ''
-                                : ''
-                            }`}
-                            style={{
-                              backgroundColor: answerFeedback?.show 
-                                ? option === currentQuestion.correctAnswer 
-                                  ? '#4CAF50' 
-                                  : option === answerFeedback.selectedAnswer 
-                                    ? '#F44336' 
-                                    : 'white'
-                                : 'white',
-                              color: answerFeedback?.show 
-                                ? option === currentQuestion.correctAnswer || option === answerFeedback.selectedAnswer
-                                  ? 'white' 
-                                  : 'black'
-                                : 'black',
-                              height: '80px',
-                              width: '85%',
-                              transition: 'all 0.5s ease-in-out',
-                              opacity: answerFeedback?.fadeOut ? 0.7 : 1,
-                              transform: answerFeedback?.fadeOut ? 'scale(0.98)' : 'scale(1)'
-                            }}
-                          >
-                            {option}
-                          </SoundButton>
-                        ))}
+                    <CardContent className="mobile-padding p-2">
+                      <div className="flex flex-col items-center w-full">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl mx-auto">
+                          {currentQuestion.options.map((option, index) => {
+                            const isCorrect = practiceCompetitionFeedback?.show && option === currentQuestion.correctAnswer;
+                            const isIncorrect = practiceCompetitionFeedback?.show && option === practiceCompetitionFeedback.selectedAnswer && !isCorrect;
+                            return (
+                              <SoundButton
+                                key={index}
+                                onClick={() => handleAnswerSubmit(option)}
+                                disabled={isAnswering}
+                                className={`answer-option rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center text-lg font-semibold h-12 w-full mx-auto
+                                  ${isCorrect ? 'bg-green-500 text-white' : isIncorrect ? 'bg-red-500 text-white' : 'bg-white text-black'}
+                                  ${practiceCompetitionFeedback?.fadeOut ? 'opacity-70 scale-95' : ''}
+                                `}
+                                style={{
+                                  minHeight: '48px',
+                                  maxWidth: '320px',
+                                  margin: '0 auto',
+                                  transition: 'all 0.3s',
+                                }}
+                              >
+                                {option}
+                              </SoundButton>
+                            );
+                          })}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
