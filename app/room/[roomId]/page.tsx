@@ -2564,6 +2564,14 @@ export default function RoomPage() {
                 </div>
               </div>
             )}
+                          {room.game_mode === "competition" && room.game_state === "playing" && (
+                <div className="w-full flex justify-center mb-4">
+                  <div className="bg-gradient-to-r from-blue-200 to-blue-400 border-2 border-blue-300 rounded-3xl px-8 py-3 shadow-lg flex flex-col items-center">
+                    <span className="text-lg font-semibold text-blue-900">{strings.timeRemaining}</span>
+                    <span className="text-4xl font-extrabold text-blue-900">{timeLeft}s</span>
+                  </div>
+                </div>
+              )}
             {/* Responsive layout for question and leaderboard */}
             <div className="flex flex-col lg:flex-row gap-8 w-full">
               <div className="flex-1 min-w-0">
@@ -2607,21 +2615,21 @@ export default function RoomPage() {
                           {currentQuestion.options.map((option, index) => {
                             let highlightClass = '';
                             if (room.game_mode === "competition") {
-                              // Default: blue background, bold white text
-                              highlightClass = 'bg-blue-500 text-white font-bold';
+                              // Default: blue background, black text
+                              highlightClass = 'bg-blue-500 text-black font-bold';
                               // After answering, show feedback
                               if (competitionFeedback?.show) {
                                 if (option === currentQuestion.correctAnswer) {
-                                  highlightClass = 'bg-green-500 text-white font-bold';
+                                  highlightClass = 'bg-green-500 text-black font-bold';
                                 } else if (option === selectedAnswer) {
-                                  highlightClass = 'bg-red-500 text-white font-bold';
+                                  highlightClass = 'bg-red-500 text-black font-bold';
                                 }
                               }
                             } else if (practiceCompetitionFeedback?.show) {
                               if (option === currentQuestion.correctAnswer) {
-                                highlightClass = 'bg-green-500 text-white';
+                                highlightClass = 'bg-green-500 text-black';
                               } else {
-                                highlightClass = 'bg-red-500 text-white';
+                                highlightClass = 'bg-red-500 text-black';
                               }
                             } else {
                               highlightClass = 'bg-white text-black';
