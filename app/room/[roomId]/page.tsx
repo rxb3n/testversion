@@ -48,6 +48,7 @@ interface Question {
   english: string;
   correctAnswer: string;
   options: string[];
+  timeLimit: number; // Added time limit
 }
 
 interface Player {
@@ -861,11 +862,24 @@ export default function RoomPage() {
       const currentRoom = roomRef.current;
       const answeringPlayer = currentRoom?.players.find((p: Player) => p.id === answerPlayerId);
       if (answeringPlayer) {
+        // Calculate points: 10 - (time taken to answer)
+        const points = Math.max(1, 10 - (currentQuestion.timeLimit - timeLeft));
+        // Update score for current player
+        setRoom((prevRoom: Room | null) => {
+          if (!prevRoom) return prevRoom;
+          return {
+            ...prevRoom,
+            players: prevRoom.players.map(p =>
+              p.id === playerId ? { ...p, score: (p.score || 0) + points } : p
+            )
+          };
+        });
         setCompetitionFeedback({
           show: true,
           type: 'correct',
           word: word,
-          playerName: answeringPlayer.name
+          playerName: answeringPlayer.name,
+          fadeOut: false
         });
       }
     });
@@ -878,7 +892,8 @@ export default function RoomPage() {
           show: true,
           type: 'incorrect',
           word: correctAnswer,
-          playerName: answeringPlayer.name
+          playerName: answeringPlayer.name,
+          fadeOut: false
         });
       }
     });
@@ -890,7 +905,8 @@ export default function RoomPage() {
         setCompetitionFeedback({
           show: true,
           type: 'timeout',
-          playerName: timeoutPlayer.name
+          playerName: timeoutPlayer.name,
+          fadeOut: false
         });
       }
     });
@@ -1549,12 +1565,23 @@ export default function RoomPage() {
           fadeOut: false
         });
       } else if (isCorrect) {
-        setPracticeCompetitionFeedback({
+        // Calculate points: 10 - (time taken to answer)
+        const points = Math.max(1, 10 - (currentQuestion.timeLimit - timeLeft));
+        // Update score for current player
+        setRoom((prevRoom: Room | null) => {
+          if (!prevRoom) return prevRoom;
+          return {
+            ...prevRoom,
+            players: prevRoom.players.map(p =>
+              p.id === playerId ? { ...p, score: (p.score || 0) + points } : p
+            )
+          };
+        });
+        setCompetitionFeedback({
           show: true,
           type: 'correct',
           word: currentQuestion.correctAnswer,
           playerName: currentPlayer?.name || 'Player',
-          correctAnswer: currentQuestion.correctAnswer,
           fadeOut: false
         });
       } else {
@@ -2579,7 +2606,16 @@ export default function RoomPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl mx-auto">
                           {currentQuestion.options.map((option, index) => {
                             let highlightClass = 'bg-white text-black';
-                            if (practiceCompetitionFeedback?.show) {
+                            if (room.game_mode === "competition") {
+                              highlightClass = 'bg-blue-500 text-white font-bold';
+                              if (competitionFeedback?.show) {
+                                if (option === currentQuestion.correctAnswer) {
+                                  highlightClass = 'bg-green-500 text-white font-bold';
+                                } else if (option === selectedAnswer) {
+                                  highlightClass = 'bg-red-500 text-white font-bold';
+                                }
+                              }
+                            } else if (practiceCompetitionFeedback?.show) {
                               if (option === currentQuestion.correctAnswer) {
                                 highlightClass = 'bg-green-500 text-white';
                               } else {
@@ -2591,7 +2627,7 @@ export default function RoomPage() {
                                 key={index}
                                 onClick={() => handleAnswerSubmit(option)}
                                 disabled={isAnswering}
-                                className={`answer-option rounded-2xl shadow-lg flex items-center justify-center text-lg font-semibold h-12 w-full mx-auto ${practiceCompetitionFeedback?.fadeOut ? 'opacity-70 scale-95' : ''} ${highlightClass}`}
+                                className={`answer-option rounded-2xl shadow-lg flex items-center justify-center text-lg font-semibold h-12 w-full mx-auto ${practiceCompetitionFeedback?.fadeOut || competitionFeedback?.fadeOut ? 'opacity-70 scale-95' : ''} ${highlightClass}`}
                                 style={{
                                   minHeight: '48px',
                                   maxWidth: '320px',
