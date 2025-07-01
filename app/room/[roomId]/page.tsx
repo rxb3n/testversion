@@ -867,6 +867,7 @@ export default function RoomPage() {
 
     // Competition feedback events
     newSocket.on("competition-correct-answer", ({ playerId: answerPlayerId, word }: { playerId: string; word: string }) => {
+      console.log('[COMPETITION FEEDBACK] Received competition-correct-answer:', { answerPlayerId, word, localPlayerId: playerId });
       if (answerPlayerId !== playerId) return; // Only show feedback for the answering player
       setCompetitionFeedback({
         show: true,
@@ -877,12 +878,13 @@ export default function RoomPage() {
       });
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = setTimeout(() => {
-        setCompetitionFeedback((fb) => fb ? { ...fb, fadeOut: true } : null);
+        setCompetitionFeedback((fb: any) => fb ? { ...fb, fadeOut: true } : null);
         setTimeout(() => {
           setCompetitionFeedback(null);
           setCurrentQuestion(null);
           setSelectedAnswer("");
           setIsAnswering(false);
+          console.log('[COMPETITION FEEDBACK] Loading next question after correct feedback');
           if (roomRef.current && roomRef.current.game_mode === "competition" && roomRef.current.game_state !== "finished") {
             setTimeout(() => loadQuestion(roomRef.current!), 100);
           }
@@ -891,6 +893,7 @@ export default function RoomPage() {
     });
 
     newSocket.on("competition-incorrect-answer", ({ playerId: answerPlayerId, correctAnswer }: { playerId: string; correctAnswer: string }) => {
+      console.log('[COMPETITION FEEDBACK] Received competition-incorrect-answer:', { answerPlayerId, correctAnswer, localPlayerId: playerId });
       if (answerPlayerId !== playerId) return;
       setCompetitionFeedback({
         show: true,
@@ -901,12 +904,13 @@ export default function RoomPage() {
       });
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = setTimeout(() => {
-        setCompetitionFeedback((fb) => fb ? { ...fb, fadeOut: true } : null);
+        setCompetitionFeedback((fb: any) => fb ? { ...fb, fadeOut: true } : null);
         setTimeout(() => {
           setCompetitionFeedback(null);
           setCurrentQuestion(null);
           setSelectedAnswer("");
           setIsAnswering(false);
+          console.log('[COMPETITION FEEDBACK] Loading next question after incorrect feedback');
           if (roomRef.current && roomRef.current.game_mode === "competition" && roomRef.current.game_state !== "finished") {
             setTimeout(() => loadQuestion(roomRef.current!), 100);
           }
@@ -915,6 +919,7 @@ export default function RoomPage() {
     });
 
     newSocket.on("competition-timeout", ({ playerId: timeoutPlayerId }: { playerId: string }) => {
+      console.log('[COMPETITION FEEDBACK] Received competition-timeout:', { timeoutPlayerId, localPlayerId: playerId });
       if (timeoutPlayerId !== playerId && playerId) return;
       setCompetitionFeedback({
         show: true,
@@ -925,12 +930,13 @@ export default function RoomPage() {
       });
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = setTimeout(() => {
-        setCompetitionFeedback((fb) => fb ? { ...fb, fadeOut: true } : null);
+        setCompetitionFeedback((fb: any) => fb ? { ...fb, fadeOut: true } : null);
         setTimeout(() => {
           setCompetitionFeedback(null);
           setCurrentQuestion(null);
           setSelectedAnswer("");
           setIsAnswering(false);
+          console.log('[COMPETITION FEEDBACK] Loading next question after timeout feedback');
           if (roomRef.current && roomRef.current.game_mode === "competition" && roomRef.current.game_state !== "finished") {
             setTimeout(() => loadQuestion(roomRef.current!), 100);
           }
@@ -1241,6 +1247,7 @@ export default function RoomPage() {
 
   // Enhanced question loading with proper language detection
   const loadQuestion = async (currentRoom: Room) => {
+    console.log('[COMPETITION] loadQuestion called', { currentRoom });
     if (isLoadingQuestion) {
       console.log("⏳ Question already loading, skipping...");
       return;
@@ -1505,6 +1512,7 @@ export default function RoomPage() {
 
   // Handle answer submission with improved feedback logic
   const handleAnswerSubmit = async (answer: string, isTimeout: boolean = false) => {
+    console.log('[COMPETITION] handleAnswerSubmit called', { answer, isTimeout, currentQuestion, isAnswering });
     if (isAnswering || !currentQuestion || !socket) return;
     
     setIsAnswering(true);
