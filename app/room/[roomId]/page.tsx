@@ -877,7 +877,7 @@ export default function RoomPage() {
         setCompetitionFeedback({
           show: true,
           type: 'correct',
-          word: word,
+          word: currentQuestion.correctAnswer,
           playerName: answeringPlayer.name,
           fadeOut: false
         });
@@ -1556,14 +1556,21 @@ export default function RoomPage() {
     // Handle visual feedback for competition mode
     if (room?.game_mode === "competition") {
       if (isTimeout) {
-        setPracticeCompetitionFeedback({
+        setCompetitionFeedback({
           show: true,
           type: 'timeout',
-          word: currentQuestion.correctAnswer,
           playerName: currentPlayer?.name || 'Player',
-          correctAnswer: currentQuestion.correctAnswer,
           fadeOut: false
         });
+        // Wait 1 second before loading the next question
+        setTimeout(() => {
+          setCompetitionFeedback((fb: typeof competitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
+          setTimeout(() => setCompetitionFeedback(null), 500);
+          setCurrentQuestion(null);
+          setSelectedAnswer("");
+          setIsAnswering(false);
+        }, 1000);
+        return;
       } else if (isCorrect) {
         // Calculate points: 10 - (time taken to answer)
         const points = Math.max(1, 10 - (currentQuestion.timeLimit - timeLeft));
@@ -2566,9 +2573,12 @@ export default function RoomPage() {
             )}
                           {room.game_mode === "competition" && room.game_state === "playing" && (
                 <div className="w-full flex justify-center mb-4">
-                  <div className="bg-gradient-to-r from-blue-200 to-blue-400 border-2 border-blue-300 rounded-3xl px-8 py-3 shadow-lg flex flex-col items-center">
-                    <span className="text-lg font-semibold text-blue-900">{strings.timeRemaining}</span>
-                    <span className="text-4xl font-extrabold text-blue-900">{timeLeft}s</span>
+                  <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-3xl px-6 py-3 shadow-lg flex flex-col items-center lg:fixed lg:top-6 lg:left-1/2 lg:-translate-x-1/2 lg:z-30 lg:w-[420px] lg:py-6 lg:px-10 lg:shadow-2xl">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-7 w-7 text-blue-600 lg:h-10 lg:w-10" />
+                      <span className="text-3xl font-bold text-blue-700 lg:text-5xl">{timeLeft}s</span>
+                    </div>
+                    <span className="text-sm text-gray-600 mt-1 lg:text-lg">{strings.timeRemaining}</span>
                   </div>
                 </div>
               )}
