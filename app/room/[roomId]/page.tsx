@@ -2591,7 +2591,7 @@ export default function RoomPage() {
                                 key={index}
                                 onClick={() => handleAnswerSubmit(option)}
                                 disabled={isAnswering}
-                                className={`answer-option rounded-2xl shadow-lg flex items-center justify-center text-lg font-semibold h-12 w-full mx-auto ${highlightClass} ${practiceCompetitionFeedback?.fadeOut ? 'opacity-70 scale-95' : ''}`}
+                                className={`answer-option rounded-2xl shadow-lg flex items-center justify-center text-lg font-semibold h-12 w-full mx-auto ${practiceCompetitionFeedback?.fadeOut ? 'opacity-70 scale-95' : ''} ${highlightClass}`}
                                 style={{
                                   minHeight: '48px',
                                   maxWidth: '320px',
