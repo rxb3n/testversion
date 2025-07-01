@@ -1485,6 +1485,7 @@ export default function RoomPage() {
           fadeOut: false
         });
       } else if (isCorrect) {
+        audioRef.current.playSuccess();
         setPracticeCompetitionFeedback({
           show: true,
           type: 'correct',
@@ -1494,6 +1495,7 @@ export default function RoomPage() {
           fadeOut: false
         });
       } else {
+        audioRef.current.playFailure();
         setPracticeCompetitionFeedback({
           show: true,
           type: 'incorrect',
@@ -1504,12 +1506,15 @@ export default function RoomPage() {
           fadeOut: false
         });
       }
-      // Clear feedback after 2 seconds
+      // Keep feedback and highlights for 1 second, then load next question
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = setTimeout(() => {
         setPracticeCompetitionFeedback((fb: typeof practiceCompetitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
         setTimeout(() => setPracticeCompetitionFeedback(null), 500);
-      }, 2000);
+        setCurrentQuestion(null);
+        setSelectedAnswer("");
+        setIsAnswering(false);
+      }, 1000);
       // Emit answer to server with 1 point for correct answers
       socket.emit("answer", {
         roomId,
@@ -1525,10 +1530,6 @@ export default function RoomPage() {
           correctAnswer: currentQuestion.correctAnswer
         }
       }, () => {});
-      // Clear current question and selected answer
-      setCurrentQuestion(null);
-      setSelectedAnswer("");
-      setIsAnswering(false);
       // Don't reset the practice timer - let it continue counting down
       return;
     }
@@ -2525,31 +2526,21 @@ export default function RoomPage() {
         {/* Practice/Competition Mode Gameplay */}
         {room.game_state === "playing" && (room.game_mode === "practice" || room.game_mode === "competition") && (
           <div className="flex flex-col items-center justify-center w-full min-h-[70vh]">
-            <div className="flex flex-row gap-10 w-full max-w-5xl justify-center items-start">
-              {/* Question Section */}
-              <div className="flex-1 max-w-xl">
-                {/* Timer Display */}
-                {room.game_mode === "practice" && practiceTimerActive && (
-                  <div className="text-center mb-6">
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-6 shadow-lg">
-                      <div className="flex items-center justify-center gap-4">
-                        <Clock className="h-10 w-10 text-blue-600" />
-                        <div>
-                          <p className="text-lg font-medium text-gray-600 mb-2">{strings.timeRemaining}</p>
-                          <p className={`text-6xl md:text-7xl font-bold transition-all duration-300 ${
-                            practiceTimer <= 3 
-                              ? 'text-red-600 animate-pulse' 
-                              : practiceTimer <= 5 
-                              ? 'text-orange-600' 
-                              : 'text-blue-700'
-                          }`}>
-                            {practiceTimer}s
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+            {/* Practice Mode Timer Display */}
+            {room.game_mode === "practice" && (
+              <div className="w-full flex justify-center mb-4">
+                <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-3xl px-6 py-3 shadow-lg flex flex-col items-center">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-7 w-7 text-blue-600" />
+                    <span className="text-3xl font-bold text-blue-700">{practiceTimer}s</span>
                   </div>
-                )}
+                  <span className="text-sm text-gray-600 mt-1">{strings.timeRemaining}</span>
+                </div>
+              </div>
+            )}
+            {/* Responsive layout for question and leaderboard */}
+            <div className="flex flex-col lg:flex-row gap-8 w-full">
+              <div className="flex-1 min-w-0">
                 {/* Question Card */}
                 {currentQuestion ? (
                   <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl">
@@ -2668,8 +2659,8 @@ export default function RoomPage() {
                   </div>
                 )}
               </div>
-              {/* Leaderboard Section */}
-              <div className="w-[340px] min-w-[280px] max-w-xs">
+              {/* Leaderboard Section - below on mobile, side on desktop */}
+              <div className="w-full lg:w-[340px] min-w-[280px] max-w-xs mt-8 lg:mt-0 self-center">
                 <Card className="bg-white/90 backdrop-blur-sm border-blue-200 shadow rounded-2xl">
                   <CardHeader className="text-center pb-2">
                     <CardTitle className="flex items-center justify-center gap-2 text-base text-blue-800">
