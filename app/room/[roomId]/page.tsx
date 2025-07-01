@@ -269,13 +269,13 @@ export default function RoomPage() {
     // Add loading transition state
     const [showLoadingTransition, setShowLoadingTransition] = useState(false);
 
-    // Add useEffect to trigger the transition when entering the lobby
-    useEffect(() => {
-      if (room?.game_state === 'lobby' && !showLoadingTransition) {
-        setShowLoadingTransition(true);
-        setTimeout(() => setShowLoadingTransition(false), 1200); // 1.2s fade
-      }
-    }, [room?.game_state]);
+      // Add useEffect to trigger the transition when entering the lobby
+  useEffect(() => {
+    if (room?.game_state === 'lobby' && !showLoadingTransition) {
+      setShowLoadingTransition(true);
+      setTimeout(() => setShowLoadingTransition(false), 1200); // 1.2s fade
+    }
+  }, [room?.game_state, showLoadingTransition]);
 
   // Top-level useEffect to sync currentQuestionRef
   useEffect(() => {
@@ -2143,7 +2143,7 @@ export default function RoomPage() {
   )}
 
   return (
-    <div className={`min-h-screen relative overflow-hidden ${gradientClass}`}>
+    <div className={`min-h-screen relative overflow-hidden ${gradientClass} transition-all duration-1000 ${showLoadingTransition ? 'opacity-0' : 'opacity-100'}`}>
       {/* Static Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className={`absolute inset-0 transition-all duration-700 ease-in-out ${
@@ -2195,7 +2195,7 @@ export default function RoomPage() {
                 <div className="w-8 h-8 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
                   <Users className="h-4 w-4 text-white" />
                 </div>
-                <h1 className="mobile-text-xl font-bold text-gray-900">{strings.room} {roomId}</h1>
+                <h1 className="mobile-text-xl font-bold text-white">{strings.room} {roomId}</h1>
             </div>
             {isCurrentPlayerHost && (
                 <Badge variant={"outline" as any} className="bg-yellow-50 text-yellow-700 border-yellow-200 rounded-full">
@@ -2509,89 +2509,7 @@ export default function RoomPage() {
                     </Card>
                   )}
 
-                  {/* Rules Section - Collapsible */}
-                  <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl w-full max-w-2xl">
-                    <CardHeader className="mobile-padding">
-                      <CardTitle className="mobile-text-lg text-gray-900 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
-                            <BookOpen className="h-3 w-3 text-white" />
-                          </div>
-                          {strings.gameRules}
-                        </div>
-                        <SoundButton
-                          onClick={() => setRulesCollapsed(!rulesCollapsed)}
-                          variant="outline"
-                          size="sm"
-                          className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl shadow-sm"
-                        >
-                          {rulesCollapsed ? '▼' : '▲'}
-                        </SoundButton>
-                      </CardTitle>
-                    </CardHeader>
-                    {!rulesCollapsed && (
-                      <CardContent className="mobile-spacing-sm mobile-text-sm mobile-padding">
-                        <div className="space-y-2 mobile-spacing-sm">
-                          <p className="font-medium mobile-text-base text-gray-900">🎮 {strings.gameModes}:</p>
-                          <div className="space-y-2 ml-4">
-                            <div className="flex items-start gap-2">
-                              <BookOpen className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                              <div className="min-w-0">
-                                <p className="font-medium text-blue-600 mobile-text-sm">{strings.practiceMode}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <Zap className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                              <div className="min-w-0">
-                                <p className="font-medium text-orange-600 mobile-text-sm">{strings.competitionMode}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <Heart className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                              <div className="min-w-0">
-                                <p className="font-medium text-purple-600 mobile-text-sm">{strings.cooperationMode}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
 
-                        <div className="space-y-2 mobile-spacing-sm">
-                          <p className="font-medium mobile-text-base text-gray-900">🎮 {strings.howToPlay}:</p>
-                          <ul className="space-y-1 text-gray-600 ml-4">
-                            <li className="mobile-text-sm">• {strings.chooseGameMode}</li>
-                            <li className="mobile-text-sm">• {strings.translateEnglishWords}</li>
-                            <li className="mobile-text-sm">• {strings.earnPoints}</li>
-                            <li className="mobile-text-sm">• {strings.firstToReach}</li>
-                          </ul>
-                        </div>
-
-                        <div className="space-y-2 mobile-spacing-sm">
-                          <p className="font-medium mobile-text-base text-gray-900">🌍 {strings.languages}:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {GAME_LANGUAGES.map((lang) => (
-                              <Badge key={lang.value} variant="outline" className="mobile-text-sm flex items-center gap-1 border-gray-300 text-gray-700 rounded-full">
-                                <FlagIcon country={lang.country} size="sm" />
-                                {lang.label}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-
-                        {connectionStatus === 'error' && (
-                          <div className="space-y-2 mt-4 p-3 bg-red-50 rounded-2xl border border-red-200">
-                            <p className="font-medium text-red-700 mobile-text-sm">🔧 {strings.connectionIssues}:</p>
-                            <ul className="space-y-1 text-red-600 mobile-text-sm ml-4">
-                              <li>• {strings.tryRefreshing}</li>
-                              <li>• {strings.checkInternet}</li>
-                              <li>• {strings.disableAdBlockers}</li>
-                              <li>• {strings.tryDifferentBrowser}</li>
-                              <li>• {strings.clearCache}</li>
-                            </ul>
-                          </div>
-                        )}
-                      </CardContent>
-                    )}
-                  </Card>
 
                   {/* Ready/Start Button */}
                   {room.game_mode && (
@@ -2968,7 +2886,7 @@ export default function RoomPage() {
                     <Heart className="h-3 w-3 mr-1" />
                     {strings.cooperationMode}
                   </Badge>
-                  <Badge variant="outline" className="border-gray-300 text-gray-700 rounded-full">
+                  <Badge variant="outline" className="border-white/30 text-white rounded-full">
                     <Target className="h-3 w-3 mr-1" />
                     {strings.target}: {room.target_score}
                   </Badge>
