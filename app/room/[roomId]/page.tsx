@@ -263,6 +263,14 @@ export default function RoomPage() {
   // Add at the top level of the RoomPage component:
   const [lobbyTab, setLobbyTab] = useState<'main' | 'rules'>('main');
 
+  // Add after other refs
+  const currentQuestionRef = useRef<Question | null>(null);
+
+  // Top-level useEffect to sync currentQuestionRef
+  useEffect(() => {
+    currentQuestionRef.current = currentQuestion;
+  }, [currentQuestion]);
+
   // Validate required parameters
   useEffect(() => {
     if (!roomId || !playerId || !playerName) {
@@ -863,7 +871,8 @@ export default function RoomPage() {
       const answeringPlayer = currentRoom?.players.find((p: Player) => p.id === answerPlayerId);
       if (answeringPlayer) {
         // Defensive: ensure timeLimit and timeLeft are numbers
-        const timeLimit = typeof currentQuestion.timeLimit === 'number' && !isNaN(currentQuestion.timeLimit) ? currentQuestion.timeLimit : 10;
+        const cq = currentQuestionRef.current;
+        const timeLimit = cq && typeof cq.timeLimit === 'number' && !isNaN(cq.timeLimit) ? cq.timeLimit : 10;
         const timeUsed = typeof timeLeft === 'number' && !isNaN(timeLeft) ? timeLeft : 0;
         const points = Math.max(1, 10 - (timeLimit - timeUsed));
         console.log('🏆 Awarding points:', points, 'to player:', playerId, 'timeLimit:', timeLimit, 'timeLeft:', timeUsed);
@@ -880,7 +889,7 @@ export default function RoomPage() {
         setCompetitionFeedback({
           show: true,
           type: 'correct',
-          word: currentQuestion.correctAnswer,
+          word: cq?.correctAnswer || word,
           playerName: answeringPlayer.name,
           fadeOut: false
         });
