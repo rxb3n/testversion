@@ -1542,7 +1542,8 @@ export default function RoomPage() {
           timeLeft: currentTimeLeft,
           isTimeout: isTimeout,
           isPracticeMode: true,
-          points: isCorrect ? 1 : 0
+          points: isCorrect ? 1 : 0,
+          correctAnswer: currentQuestion.correctAnswer
         }
       }, () => {});
       
