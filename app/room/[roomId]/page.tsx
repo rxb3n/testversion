@@ -42,7 +42,7 @@ import { getLocalizedStrings, Language } from "@/lib/localization";
 import { WORD_DATABASE } from "@/lib/word-database";
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { useBgPulse } from "../../layout"
+import { useBgPulse } from "../../client-layout"
 
 interface Question {
   questionId: string;

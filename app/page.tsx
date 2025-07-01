@@ -11,7 +11,7 @@ import { Gamepad2, Users, Settings, Volume2, BookOpen, Zap, Globe, Heart, ArrowR
 import { io, Socket } from "socket.io-client"
 import { getLocalizedStrings, Language } from "@/lib/localization"
 import { FlagIcon, getCountryCode } from "@/components/ui/flag-icon"
-import { useBgPulse } from "./layout"
+import { useBgPulse } from "./client-layout"
 
 interface AvailableRoom {
   id: string
