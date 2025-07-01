@@ -2106,6 +2106,16 @@ export default function RoomPage() {
   const floatSpeed = isLobby ? 25 : 30; // slower than before but still faster than home
   const letterColor = isLobby || isPlaying ? 'text-white/40' : 'text-black/20';
 
+  // Add fade overlay state
+  const [showFadeOverlay, setShowFadeOverlay] = useState(true);
+
+  // Fade overlay effect
+  useEffect(() => {
+    if (room?.game_state === 'lobby' || room?.game_state === 'playing') {
+      setShowFadeOverlay(true);
+      setTimeout(() => setShowFadeOverlay(false), 500); // 0.5s fade
+    }
+  }, [room?.game_state]);
 
   // Overlay for seamless loading transition
   {showLoadingTransition && (
@@ -2144,6 +2154,10 @@ export default function RoomPage() {
 
   return (
     <div className={`min-h-screen relative overflow-hidden transition-all duration-1000 ${showLoadingTransition ? 'bg-black' : gradientClass}`}>
+      {/* Black fade overlay for gradient fade-in */}
+      {showFadeOverlay && (
+        <div className="fixed inset-0 z-40 bg-black transition-opacity duration-500 pointer-events-none" style={{ opacity: showFadeOverlay ? 1 : 0 }} />
+      )}
       {/* Static Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className={`absolute inset-0 transition-all duration-700 ease-in-out ${
@@ -2650,7 +2664,7 @@ export default function RoomPage() {
                 </div>
               )}
             {/* Responsive layout for question and leaderboard */}
-            <div className="flex flex-col lg:flex-row gap-8 w-full">
+            <div className="flex flex-col gap-8 w-full">
               <div className="flex-1 min-w-0">
                 {/* Question Card */}
                 {currentQuestion ? (
@@ -2805,8 +2819,8 @@ export default function RoomPage() {
                 </div>
               )}
               </div>
-              {/* Leaderboard Section - below on mobile, side on desktop */}
-              <div className="w-full lg:w-[340px] min-w-[280px] max-w-xs mt-8 lg:mt-0 self-center">
+              {/* Leaderboard Section - always below the question */}
+              <div className="w-full max-w-lg mx-auto mt-8">
                 <Card className="bg-white/90 backdrop-blur-sm border-blue-200 shadow rounded-2xl">
                   <CardHeader className="text-center pb-2">
                     <CardTitle className="flex items-center justify-center gap-2 text-base text-blue-800">
