@@ -697,10 +697,15 @@ export default function RoomPage() {
       }
     });
 
-    newSocket.on("room-update", (data: any) => {
-      console.log("📡 Room update received:", data);
-      setRoom(data.room);
+    newSocket.on("room-update", ({ room: updatedRoom }: { room: Room }) => {
+      console.log('Room update (hyphen) received:', updatedRoom);
+      setRoom(updatedRoom);
       setError(null);
+      // Clear word suggestion when returning to lobby
+      if (updatedRoom.game_state === 'lobby') {
+        setWordSuggestion(null);
+        setCompetitionFeedback(null);
+      }
     });
 
     // Handle pong responses from server
@@ -1129,19 +1134,6 @@ export default function RoomPage() {
       }
     });
 
-    newSocket.on('room_updated', (updatedRoom: Room) => {
-      console.log('Room updated:', updatedRoom);
-      setRoom(updatedRoom);
-      setError(null);
-      
-      // Clear word suggestion when returning to lobby
-      if (updatedRoom.game_state === 'lobby') {
-        setWordSuggestion(null);
-        // Don't clear answer feedback - let it fade out naturally
-        setCompetitionFeedback(null);
-      }
-    });
-
     setSocket(newSocket);
 
     // Set up activity ping
@@ -1559,13 +1551,7 @@ export default function RoomPage() {
       setSelectedAnswer("");
       setIsAnswering(false);
       
-      // Load next question for practice mode after a short delay
-      setTimeout(() => {
-        if (room && practiceTimerActive) {
-          loadQuestion(room);
-        }
-      }, 500);
-      
+      // Remove local loadQuestion(room) call
       // Don't reset the practice timer - let it continue counting down
       return;
     }
@@ -2664,9 +2650,9 @@ export default function RoomPage() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl">
-                    <CardContent className="mobile-padding text-center py-12">
-                      <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+                  <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl min-h-[220px] flex items-center justify-center">
+                    <CardContent className="mobile-padding text-center py-12 flex flex-col items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
                       <p className="text-gray-600 text-center">{strings.nextQuestionWillAppear}</p>
                     </CardContent>
                   </Card>
