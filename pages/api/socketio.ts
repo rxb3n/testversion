@@ -756,6 +756,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return
           }
 
+          // Emit competition feedback events for clients
+          if (room.game_mode === "competition") {
+            if (isTimeout) {
+              io.to(roomId).emit("competition-timeout", { playerId });
+            } else if (isCorrect) {
+              io.to(roomId).emit("competition-correct-answer", { playerId, word: correctAnswer });
+            } else {
+              io.to(roomId).emit("competition-incorrect-answer", { playerId, correctAnswer });
+            }
+          }
+
           const updatedRoom = await getRoom(roomId)
           callback({ room: updatedRoom })
           io.to(roomId).emit("room-update", { room: updatedRoom })
