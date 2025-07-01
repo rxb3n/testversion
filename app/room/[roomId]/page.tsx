@@ -2528,12 +2528,12 @@ export default function RoomPage() {
             {/* Practice Mode Timer Display */}
             {room.game_mode === "practice" && (
               <div className="w-full flex justify-center mb-4">
-                <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-3xl px-6 py-3 shadow-lg flex flex-col items-center">
+                <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-3xl px-6 py-3 shadow-lg flex flex-col items-center lg:fixed lg:top-6 lg:left-1/2 lg:-translate-x-1/2 lg:z-30 lg:w-[420px] lg:py-6 lg:px-10 lg:shadow-2xl">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-7 w-7 text-blue-600" />
-                    <span className="text-3xl font-bold text-blue-700">{practiceTimer}s</span>
+                    <Clock className="h-7 w-7 text-blue-600 lg:h-10 lg:w-10" />
+                    <span className="text-3xl font-bold text-blue-700 lg:text-5xl">{practiceTimer}s</span>
                   </div>
-                  <span className="text-sm text-gray-600 mt-1">{strings.timeRemaining}</span>
+                  <span className="text-sm text-gray-600 mt-1 lg:text-lg">{strings.timeRemaining}</span>
                 </div>
               </div>
             )}
@@ -2614,35 +2614,35 @@ export default function RoomPage() {
                 )}
                 {/* Practice Mode Feedback Section */}
                 {room.game_mode === "practice" && practiceCompetitionFeedback?.show && (
-                  <div className="mt-6">
-                    <Card className="bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl">
-                      <CardContent className="p-6">
-                        <div className={`text-center transition-all duration-500 ${
-                          practiceCompetitionFeedback.fadeOut ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'
-                        }`}>
-                          {practiceCompetitionFeedback.type === 'correct' && (
-                            <div className="space-y-2">
-                              <div className="text-3xl font-bold text-green-600 mb-2">✅ {strings.correct}!</div>
-                              <div className="text-xl font-semibold text-green-700 mb-2">{practiceCompetitionFeedback.word}</div>
-                              <div className="text-lg font-bold text-green-600">+1 {strings.point}</div>
-                            </div>
-                          )}
-                          {practiceCompetitionFeedback.type === 'incorrect' && (
-                            <div className="space-y-2">
-                              <div className="text-3xl font-bold text-red-600 mb-2">❌ {strings.incorrect}</div>
-                              <div className="text-lg text-red-700 mb-2">{strings.youSelected}: <strong>{practiceCompetitionFeedback.selectedAnswer}</strong></div>
-                              <div className="text-lg text-green-700">{strings.correctAnswerWas}: <strong>{practiceCompetitionFeedback.correctAnswer}</strong></div>
-                            </div>
-                          )}
-                          {practiceCompetitionFeedback.type === 'timeout' && (
-                            <div className="space-y-2">
-                              <div className="text-3xl font-bold text-yellow-600 mb-2">⏰ {strings.timesUp}!</div>
-                              <div className="text-lg text-green-700">{strings.correctAnswerWas}: <strong>{practiceCompetitionFeedback.correctAnswer}</strong></div>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
+                  <div className="fixed inset-0 flex items-center justify-center z-40 pointer-events-none">
+                    <div className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto">
+                      <Card className="bg-white/90 border-gray-200/70 backdrop-blur-lg shadow-2xl rounded-3xl">
+                        <CardContent className="p-6">
+                          <div className={`text-center transition-all duration-500 ${practiceCompetitionFeedback.fadeOut ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'}`}>
+                            {practiceCompetitionFeedback.type === 'correct' && (
+                              <div className="space-y-2">
+                                <div className="text-3xl font-bold text-green-600 mb-2">✅ {strings.correct}!</div>
+                                <div className="text-xl font-semibold text-green-700 mb-2">{practiceCompetitionFeedback.word}</div>
+                                <div className="text-lg font-bold text-green-600">+1 {strings.point}</div>
+                              </div>
+                            )}
+                            {practiceCompetitionFeedback.type === 'incorrect' && (
+                              <div className="space-y-2">
+                                <div className="text-3xl font-bold text-red-600 mb-2">❌ {strings.incorrect}</div>
+                                <div className="text-lg text-red-700 mb-2">{strings.youSelected}: <strong>{practiceCompetitionFeedback.selectedAnswer}</strong></div>
+                                <div className="text-lg text-green-700">{strings.correctAnswerWas}: <strong>{practiceCompetitionFeedback.correctAnswer}</strong></div>
+                              </div>
+                            )}
+                            {practiceCompetitionFeedback.type === 'timeout' && (
+                              <div className="space-y-2">
+                                <div className="text-3xl font-bold text-yellow-600 mb-2">⏰ {strings.timesUp}!</div>
+                                <div className="text-lg text-green-700">{strings.correctAnswerWas}: <strong>{practiceCompetitionFeedback.correctAnswer}</strong></div>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </div>
                 )}
               </div>
