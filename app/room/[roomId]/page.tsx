@@ -2542,8 +2542,8 @@ export default function RoomPage() {
               <div className="flex-1 min-w-0">
                 {/* Question Card */}
                 {currentQuestion ? (
-                  <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl max-w-md mx-auto">
-                    <CardHeader className="mobile-padding text-center p-4">
+                  <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl max-w-lg mx-auto lg:max-w-2xl lg:p-8">
+                    <CardHeader className="mobile-padding text-center p-6 lg:p-8">
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-sm text-gray-600">{strings.questionNumber} #{(room.question_count || 0) + 1}</div>
                       </div>
@@ -2586,14 +2586,14 @@ export default function RoomPage() {
                                 onClick={() => handleAnswerSubmit(option)}
                                 disabled={isAnswering}
                                 className={`answer-option rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center text-lg font-semibold h-12 w-full mx-auto
-                                  ${isCorrect ? 'bg-green-500 text-white' : isIncorrect ? 'bg-red-500 text-white' : 'bg-white text-black'}
+                                  ${isCorrect ? 'bg-green-500 text-white transition-none' : isIncorrect ? 'bg-red-500 text-white' : 'bg-white text-black'}
                                   ${practiceCompetitionFeedback?.fadeOut ? 'opacity-70 scale-95' : ''}
                                 `}
                                 style={{
                                   minHeight: '48px',
                                   maxWidth: '320px',
                                   margin: '0 auto',
-                                  transition: 'all 0.3s',
+                                  transition: isCorrect ? 'none' : 'all 0.3s',
                                 }}
                               >
                                 {option}
@@ -2614,7 +2614,7 @@ export default function RoomPage() {
                 )}
                 {/* Practice Mode Feedback Section */}
                 {room.game_mode === "practice" && practiceCompetitionFeedback?.show && (
-                  <div className="fixed inset-0 flex items-center justify-center z-40 pointer-events-none">
+                  <div className="fixed inset-0 flex items-start justify-center z-40 pointer-events-none" style={{ top: '30%' }}>
                     <div className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto">
                       <Card className="bg-white/90 border-gray-200/70 backdrop-blur-lg shadow-2xl rounded-3xl">
                         <CardContent className="p-6">
