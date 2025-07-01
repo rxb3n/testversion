@@ -862,9 +862,11 @@ export default function RoomPage() {
       const currentRoom = roomRef.current;
       const answeringPlayer = currentRoom?.players.find((p: Player) => p.id === answerPlayerId);
       if (answeringPlayer) {
-        // Calculate points: 10 - (time taken to answer)
-        const points = Math.max(1, 10 - (currentQuestion.timeLimit - timeLeft));
-        console.log('🏆 Awarding points:', points, 'to player:', playerId);
+        // Defensive: ensure timeLimit and timeLeft are numbers
+        const timeLimit = typeof currentQuestion.timeLimit === 'number' && !isNaN(currentQuestion.timeLimit) ? currentQuestion.timeLimit : 10;
+        const timeUsed = typeof timeLeft === 'number' && !isNaN(timeLeft) ? timeLeft : 0;
+        const points = Math.max(1, 10 - (timeLimit - timeUsed));
+        console.log('🏆 Awarding points:', points, 'to player:', playerId, 'timeLimit:', timeLimit, 'timeLeft:', timeUsed);
         setRoom((prevRoom: Room | null) => {
           if (!prevRoom) return prevRoom;
           return {
@@ -1582,9 +1584,11 @@ export default function RoomPage() {
           setIsAnswering(false);
         }, 1000);
       } else if (isCorrect) {
-        // Calculate points: 10 - (time taken to answer)
-        const points = Math.max(1, 10 - (currentQuestion.timeLimit - timeLeft));
-        console.log('🏆 Awarding points:', points, 'to player:', playerId);
+        // Defensive: ensure timeLimit and timeLeft are numbers
+        const timeLimit = typeof currentQuestion.timeLimit === 'number' && !isNaN(currentQuestion.timeLimit) ? currentQuestion.timeLimit : 10;
+        const timeUsed = typeof timeLeft === 'number' && !isNaN(timeLeft) ? timeLeft : 0;
+        const points = Math.max(1, 10 - (timeLimit - timeUsed));
+        console.log('🏆 Awarding points:', points, 'to player:', playerId, 'timeLimit:', timeLimit, 'timeLeft:', timeUsed);
         setRoom((prevRoom: Room | null) => {
           if (!prevRoom) return prevRoom;
           return {
