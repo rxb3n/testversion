@@ -584,7 +584,7 @@ export default function HomePage() {
               {/* Main Game Controls */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Player Setup */}
-                <Card className="bg-gradient-to-br from-orange-400 via-yellow-300 to-orange-500 shadow-2xl rounded-full border-none">
+                <Card className="bg-gradient-to-br from-blue-400 via-blue-100 to-white shadow-2xl rounded-full border-none px-6 py-8 min-h-[180px] md:min-h-[220px]">
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-xl md:text-2xl flex items-center justify-center gap-3">
                       <div className="w-8 h-8 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -648,7 +648,7 @@ export default function HomePage() {
             </Card>
 
                 {/* Available Rooms */}
-                <Card className="bg-gradient-to-br from-orange-400 via-yellow-300 to-orange-500 shadow-2xl rounded-full border-none">
+                <Card className="bg-gradient-to-br from-blue-400 via-blue-100 to-white shadow-2xl rounded-full border-none px-6 py-8 min-h-[180px] md:min-h-[220px]">
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-xl md:text-2xl flex items-center justify-center gap-3">
                       <div className="w-8 h-8 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -727,7 +727,7 @@ export default function HomePage() {
               {/* Sidebar */}
               <div className="space-y-6">
             {/* Game Info */}
-                <Card className="bg-gradient-to-br from-orange-400 via-yellow-300 to-orange-500 shadow-2xl rounded-full border-none">
+                <Card className="bg-gradient-to-br from-blue-400 via-blue-100 to-white shadow-2xl rounded-full border-none px-6 py-8 min-h-[180px] md:min-h-[220px]">
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-lg flex items-center justify-center gap-3">
                       <div className="w-6 h-6 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
