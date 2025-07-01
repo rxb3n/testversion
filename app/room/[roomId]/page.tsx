@@ -184,8 +184,8 @@ export default function RoomPage() {
   const [competitionFeedback, setCompetitionFeedback] = useState<{
     show: boolean;
     type: 'correct' | 'incorrect' | 'timeout';
-    word?: string;
-    playerName?: string;
+    correctAnswer: string;
+    points: number;
     fadeOut?: boolean;
   } | null>(null);
 
@@ -867,75 +867,75 @@ export default function RoomPage() {
 
     // Competition feedback events
     newSocket.on("competition-correct-answer", ({ playerId: answerPlayerId, word }: { playerId: string; word: string }) => {
-      const currentRoom = roomRef.current;
-      const answeringPlayer = currentRoom?.players.find((p: Player) => p.id === answerPlayerId);
-      if (answeringPlayer) {
-        // Defensive: ensure timeLimit and timeLeft are numbers
-        const cq = currentQuestionRef.current;
-        setCompetitionFeedback({
-          show: true,
-          type: 'correct',
-          word: cq?.correctAnswer || word,
-          playerName: answeringPlayer.name,
-          fadeOut: false
-        });
-        console.log('✅ Correct answer feedback set');
-        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-        feedbackTimeoutRef.current = setTimeout(() => {
-          setCompetitionFeedback((fb: typeof competitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
-          setTimeout(() => setCompetitionFeedback(null), 500);
+      if (answerPlayerId !== playerId) return; // Only show feedback for the answering player
+      setCompetitionFeedback({
+        show: true,
+        type: 'correct',
+        correctAnswer: word,
+        points: timeLeft, // Points = remaining time
+        fadeOut: false
+      });
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = setTimeout(() => {
+        setCompetitionFeedback((fb) => fb ? { ...fb, fadeOut: true } : null);
+        setTimeout(() => {
+          setCompetitionFeedback(null);
           setCurrentQuestion(null);
           setSelectedAnswer("");
           setIsAnswering(false);
-          // Automatically load next question for competition mode if game is not finished
           if (roomRef.current && roomRef.current.game_mode === "competition" && roomRef.current.game_state !== "finished") {
-            setTimeout(() => loadQuestion(roomRef.current!), 100); // slight delay to allow state to clear
+            setTimeout(() => loadQuestion(roomRef.current!), 100);
           }
-        }, 1000);
-      }
+        }, 250);
+      }, 1250);
     });
 
     newSocket.on("competition-incorrect-answer", ({ playerId: answerPlayerId, correctAnswer }: { playerId: string; correctAnswer: string }) => {
-      const currentRoom = roomRef.current;
-      const answeringPlayer = currentRoom?.players.find((p: Player) => p.id === answerPlayerId);
-      if (answeringPlayer) {
-        setCompetitionFeedback({
-          show: true,
-          type: 'incorrect',
-          word: correctAnswer,
-          playerName: answeringPlayer.name,
-          fadeOut: false
-        });
-        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-        feedbackTimeoutRef.current = setTimeout(() => {
-          setCompetitionFeedback((fb: typeof competitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
-          setTimeout(() => setCompetitionFeedback(null), 500);
+      if (answerPlayerId !== playerId) return;
+      setCompetitionFeedback({
+        show: true,
+        type: 'incorrect',
+        correctAnswer,
+        points: -5,
+        fadeOut: false
+      });
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = setTimeout(() => {
+        setCompetitionFeedback((fb) => fb ? { ...fb, fadeOut: true } : null);
+        setTimeout(() => {
+          setCompetitionFeedback(null);
           setCurrentQuestion(null);
           setSelectedAnswer("");
           setIsAnswering(false);
-        }, 1000);
-      }
+          if (roomRef.current && roomRef.current.game_mode === "competition" && roomRef.current.game_state !== "finished") {
+            setTimeout(() => loadQuestion(roomRef.current!), 100);
+          }
+        }, 250);
+      }, 1250);
     });
 
     newSocket.on("competition-timeout", ({ playerId: timeoutPlayerId }: { playerId: string }) => {
-      const currentRoom = roomRef.current;
-      const timeoutPlayer = currentRoom?.players.find((p: Player) => p.id === timeoutPlayerId);
-      if (timeoutPlayer) {
-        setCompetitionFeedback({
-          show: true,
-          type: 'timeout',
-          playerName: timeoutPlayer.name,
-          fadeOut: false
-        });
-        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-        feedbackTimeoutRef.current = setTimeout(() => {
-          setCompetitionFeedback((fb: typeof competitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
-          setTimeout(() => setCompetitionFeedback(null), 500);
+      if (timeoutPlayerId !== playerId && playerId) return;
+      setCompetitionFeedback({
+        show: true,
+        type: 'timeout',
+        correctAnswer: currentQuestionRef.current?.correctAnswer || '',
+        points: -5,
+        fadeOut: false
+      });
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = setTimeout(() => {
+        setCompetitionFeedback((fb) => fb ? { ...fb, fadeOut: true } : null);
+        setTimeout(() => {
+          setCompetitionFeedback(null);
           setCurrentQuestion(null);
           setSelectedAnswer("");
           setIsAnswering(false);
-        }, 1000);
-      }
+          if (roomRef.current && roomRef.current.game_mode === "competition" && roomRef.current.game_state !== "finished") {
+            setTimeout(() => loadQuestion(roomRef.current!), 100);
+          }
+        }, 250);
+      }, 1250);
     });
 
     // Practice feedback events
