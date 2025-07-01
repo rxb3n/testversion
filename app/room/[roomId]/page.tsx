@@ -42,6 +42,7 @@ import { getLocalizedStrings, Language } from "@/lib/localization";
 import { WORD_DATABASE } from "@/lib/word-database";
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { useBgPulse } from "../../layout"
 
 interface Question {
   questionId: string;
@@ -2079,6 +2080,67 @@ export default function RoomPage() {
     {/* ...existing code... */}
   </div>
   // ... existing code ...
+
+  const { setBg, triggerPulse } = useBgPulse();
+
+  // Set background gradient based on game state/mode
+  useEffect(() => {
+    if (!room) {
+      setBg("bg-gradient-to-br from-blue-50 to-indigo-100"); // Loading/error state
+    } else if (room.game_state === "lobby") {
+      setBg("bg-gradient-to-br from-blue-50 via-purple-100 to-pink-50"); // Lobby
+    } else if (room.game_state === "playing") {
+      if (room.game_mode === "practice") {
+        setBg("bg-gradient-to-br from-green-50 via-blue-50 to-green-100");
+      } else if (room.game_mode === "competition") {
+        setBg("bg-gradient-to-br from-orange-50 via-yellow-100 to-pink-50");
+      } else if (room.game_mode === "cooperation") {
+        setBg("bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50");
+      } else {
+        setBg("bg-gradient-to-br from-white via-blue-50 to-white");
+      }
+    } else {
+      setBg("bg-gradient-to-br from-white via-blue-50 to-white");
+    }
+  }, [room, setBg]);
+
+  // Pulse on correct/incorrect answer feedback (all modes)
+  useEffect(() => {
+    // Practice/Competition feedback
+    if (practiceCompetitionFeedback?.show && !practiceCompetitionFeedback.fadeOut) {
+      if (practiceCompetitionFeedback.type === "correct") {
+        triggerPulse("green");
+      } else if (practiceCompetitionFeedback.type === "incorrect") {
+        triggerPulse("red");
+      }
+    }
+  }, [practiceCompetitionFeedback, triggerPulse]);
+
+  useEffect(() => {
+    // Competition feedback
+    if (competitionFeedback?.show && !competitionFeedback.fadeOut) {
+      if (competitionFeedback.type === "correct") {
+        triggerPulse("green");
+      } else if (competitionFeedback.type === "incorrect") {
+        triggerPulse("red");
+      }
+    }
+  }, [competitionFeedback, triggerPulse]);
+
+  useEffect(() => {
+    // Cooperation feedback
+    if (cooperationFeedback?.show && !cooperationFeedback.fadeOut) {
+      triggerPulse("green");
+    }
+    // New feedback (for new logic)
+    if (cooperationFeedbackNew?.show && !cooperationFeedbackNew.fadeOut) {
+      if (cooperationFeedbackNew.type === "correct") {
+        triggerPulse("green");
+      } else if (cooperationFeedbackNew.type === "timeout") {
+        triggerPulse("red");
+      }
+    }
+  }, [cooperationFeedback, cooperationFeedbackNew, triggerPulse]);
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">

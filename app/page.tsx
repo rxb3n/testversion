@@ -11,6 +11,7 @@ import { Gamepad2, Users, Settings, Volume2, BookOpen, Zap, Globe, Heart, ArrowR
 import { io, Socket } from "socket.io-client"
 import { getLocalizedStrings, Language } from "@/lib/localization"
 import { FlagIcon, getCountryCode } from "@/components/ui/flag-icon"
+import { useBgPulse } from "./layout"
 
 interface AvailableRoom {
   id: string
@@ -145,6 +146,7 @@ export default function HomePage() {
     return "english"
   })
   const strings = getLocalizedStrings(uiLanguage)
+  const { setBg } = useBgPulse();
 
   // Language-changing text effect
   const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState(0);
@@ -262,6 +264,10 @@ export default function HomePage() {
   useEffect(() => {
     localStorage.setItem("uiLanguage", uiLanguage)
   }, [uiLanguage])
+
+  useEffect(() => {
+    setBg("bg-gradient-to-br from-white via-blue-50 to-white"); // Home gradient
+  }, [setBg]);
 
   // Word-by-word erasing-typing text effect
   useEffect(() => {
