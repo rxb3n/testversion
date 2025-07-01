@@ -2088,6 +2088,61 @@ export default function RoomPage() {
     gradientClass = "bg-gradient-to-br from-blue-300 via-blue-500 to-indigo-700";
   }
 
+  // 1. DENSER, FASTER, LIGHTER BACKGROUND LETTERS
+  // Add a variable to control density and speed based on game state
+  const isLobby = room?.game_state === 'lobby';
+  const isPlaying = room?.game_state === 'playing';
+  const charDensity = isLobby ? 2 : 1; // 2x density in lobby
+  const floatBase = isLobby ? 18 : 8; // denser grid in lobby
+  const floatSpeed = isLobby ? 18 : 30; // faster in lobby
+  const letterColor = isLobby || isPlaying ? 'text-white/40' : 'text-black/20';
+
+  // Add loading transition state
+  const [showLoadingTransition, setShowLoadingTransition] = useState(false);
+
+  // Add useEffect to trigger the transition when entering the lobby
+  useEffect(() => {
+    if (room?.game_state === 'lobby' && !showLoadingTransition) {
+      setShowLoadingTransition(true);
+      setTimeout(() => setShowLoadingTransition(false), 1200); // 1.2s fade
+    }
+  }, [room?.game_state]);
+
+  // Overlay for seamless loading transition
+  {showLoadingTransition && (
+    <div className="fixed inset-0 z-50 pointer-events-none transition-all duration-700" style={{background: 'black', opacity: 0.95}}>
+      {/* Fade letters to white */}
+      {Object.entries(BACKGROUND_CHARS).map(([lang, chars]) =>
+        Array.from({ length: chars.length * charDensity }).map((_, i) => {
+          const char = chars[i % chars.length];
+          const baseLeft = (i * floatBase + lang.length * 3) % 100;
+          const baseTop = (i * floatBase * 1.5 + lang.length * 5) % 100;
+          const floatDuration = floatSpeed + (i % 10);
+          const floatDelay = -1 * ((i * 2.7 + lang.length * 1.3) % floatDuration);
+          const flashDelay = (i * 0.2 + lang.length * 0.1) % 6;
+          const startPosition = (i * 137.5) % 360;
+          return (
+            <div
+              key={`fade-${lang}-${i}`}
+              className={`absolute text-white/90 text-3xl md:text-5xl font-bold select-none blur-[0.5px] transition-all duration-700`}
+              style={{
+                left: `${baseLeft}%`,
+                top: `${baseTop}%`,
+                animation: `float ${floatDuration}s linear infinite, flash ${6 + (i % 3)}s ease-in-out infinite`,
+                animationDelay: `${floatDelay}s, ${flashDelay}s`,
+                transform: `rotate(${startPosition}deg)`,
+                animationPlayState: 'running',
+                opacity: 0.9,
+              }}
+            >
+              {char}
+            </div>
+          );
+        })
+      )}
+    </div>
+  )}
+
   return (
     <div className={`min-h-screen relative overflow-hidden ${gradientClass}`}>
       {/* Static Animated Background */}
@@ -2104,21 +2159,22 @@ export default function RoomPage() {
                 : 'bg-gradient-to-br from-white via-blue-50 to-white'
         }`}></div>
         {Object.entries(BACKGROUND_CHARS).map(([lang, chars]) =>
-          chars.map((char, index) => {
-            const baseLeft = (index * 8 + lang.length * 3) % 100;
-            const baseTop = (index * 12 + lang.length * 5) % 100;
-            const floatDuration = 40 + (index % 30);
-            const floatDelay = -1 * ((index * 2.7 + lang.length * 1.3) % floatDuration);
-            const flashDelay = (index * 0.2 + lang.length * 0.1) % 6;
-            const startPosition = (index * 137.5) % 360;
+          Array.from({ length: chars.length * charDensity }).map((_, i) => {
+            const char = chars[i % chars.length];
+            const baseLeft = (i * floatBase + lang.length * 3) % 100;
+            const baseTop = (i * floatBase * 1.5 + lang.length * 5) % 100;
+            const floatDuration = floatSpeed + (i % 10);
+            const floatDelay = -1 * ((i * 2.7 + lang.length * 1.3) % floatDuration);
+            const flashDelay = (i * 0.2 + lang.length * 0.1) % 6;
+            const startPosition = (i * 137.5) % 360;
             return (
               <div
-                key={`${lang}-${index}`}
-                className="absolute text-black/20 text-3xl md:text-5xl font-bold select-none blur-[0.5px]"
+                key={`${lang}-${i}`}
+                className={`absolute ${letterColor} text-3xl md:text-5xl font-bold select-none blur-[0.5px]`}
                 style={{
                   left: `${baseLeft}%`,
                   top: `${baseTop}%`,
-                  animation: `float ${floatDuration}s linear infinite, flash ${6 + (index % 3)}s ease-in-out infinite`,
+                  animation: `float ${floatDuration}s linear infinite, flash ${6 + (i % 3)}s ease-in-out infinite`,
                   animationDelay: `${floatDelay}s, ${flashDelay}s`,
                   transform: `rotate(${startPosition}deg)`,
                   animationPlayState: 'running',
@@ -2188,192 +2244,255 @@ export default function RoomPage() {
 
         {/* Game Content */}
         {room.game_state === "lobby" && (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
-            {/* Players List */}
-            <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl w-full max-w-2xl">
-              <CardHeader className="mobile-padding">
-                <CardTitle className="flex items-center gap-3 mobile-text-lg text-gray-900">
-                  <div className="w-6 h-6 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <Users className="h-3 w-3 text-white" />
-                  </div>
-                  {strings.players} ({room.players.length}/{room.game_mode === "cooperation" ? 2 : 8})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="mobile-spacing-sm mobile-padding">
-                {room.players.map((player) => (
-                  <div
-                    key={player.id}
-                    className="flex items-center justify-between p-4 bg-white/60 rounded-2xl border border-gray-200/50 hover:bg-white/80 transition-all duration-300 shadow-sm"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        {player.is_host && <Crown className="h-4 w-4 text-yellow-600" />}
-                        <span className="font-medium mobile-text-base text-gray-900">{player.name}</span>
-                        {player.id === playerId && (
-                          <Badge variant={"outline" as any} className="text-xs border-blue-300 text-blue-700 rounded-full">{strings.you}</Badge>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      {player.language && (
-                        <Badge variant={"outline" as any} className="text-xs border-gray-300 text-gray-700 rounded-full">
-                          {GAME_LANGUAGES.find(l => l.value === player.language)?.label}
-                        </Badge>
-                      )}
-                      <div className="flex items-center gap-1">
-                        {player.ready ? (
-                          <Badge variant="default" className="text-xs bg-green-600 text-white rounded-full">
-                            <Check className="h-3 w-3 mr-1" />
-                            {strings.ready}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs border-gray-300 text-gray-700 rounded-full">
-                            <X className="h-3 w-3 mr-1" />
-                            {strings.notReady}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Game Mode Selection */}
-            {isCurrentPlayerHost && !room.game_mode && (
-              <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl w-full max-w-2xl">
-                <CardHeader className="mobile-padding">
-                  <CardTitle className="mobile-text-lg text-gray-900">{strings.selectGameMode}</CardTitle>
-                  <CardDescription className="mobile-text-base text-gray-600">
-                    {strings.chooseHowToPlay}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="mobile-spacing-md mobile-padding">
-                  <div className="space-y-3 mobile-spacing-sm">
-                    <SoundButton
-                      onClick={() => handleGameModeChange("practice")}
-                      variant={"outline" as any}
-                      className="w-full mobile-btn-lg justify-start border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl shadow-sm transition-all duration-300"
-                    >
-                      <div className="w-8 h-8 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg mr-3">
-                        <BookOpen className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium text-gray-900">{strings.practiceMode}</div>
-                      </div>
-                    </SoundButton>
-                    
-                    <SoundButton
-                      onClick={() => handleGameModeChange("competition")}
-                      variant={"outline" as any}
-                      className="w-full mobile-btn-lg justify-start border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl shadow-sm transition-all duration-300"
-                    >
-                      <div className="w-8 h-8 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg mr-3">
-                        <Zap className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium text-gray-900">{strings.competitionMode}</div>
-                      </div>
-                    </SoundButton>
-                    
-                    <SoundButton
-                      onClick={() => handleGameModeChange("cooperation")}
-                      variant={"outline" as any}
-                      className="w-full mobile-btn-lg justify-start border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl shadow-sm transition-all duration-300"
-                    >
-                      <div className="w-8 h-8 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg mr-3">
-                        <Heart className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium text-gray-900">{strings.cooperationMode}</div>
-                      </div>
-                    </SoundButton>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Game Settings */}
-            {room.game_mode && (
-              <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl w-full max-w-2xl">
-                <CardHeader className="mobile-padding">
-                  <CardTitle className="flex items-center gap-3 mobile-text-lg text-gray-900">
-                    <div className="w-6 h-6 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                      <Settings className="h-3 w-3 text-white" />
-                    </div>
-                    {strings.gameSettings}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="mobile-spacing-md mobile-padding">
-                  {/* Current Game Mode */}
-                  <div className="flex items-center justify-between">
-                    <span className="mobile-text-base font-medium text-gray-900">{strings.currentGameMode}:</span>
-                    <div className="flex items-center gap-2">
-                      {room.game_mode === "practice" && (
-                        <Badge variant={"outline" as any} className="bg-blue-50 text-blue-700 border-blue-200 rounded-full">
-                          <BookOpen className="h-3 w-3 mr-1" />
-                          {strings.practiceMode}
-                        </Badge>
-                      )}
-                      {room.game_mode === "competition" && (
-                        <Badge variant={"outline" as any} className="bg-orange-50 text-orange-700 border-orange-200 rounded-full">
-                          <Zap className="h-3 w-3 mr-1" />
-                          {strings.competitionMode}
-                        </Badge>
-                      )}
-                      {room.game_mode === "cooperation" && (
-                        <Badge variant={"outline" as any} className="bg-purple-50 text-purple-700 border-purple-200 rounded-full">
-                          <Heart className="h-3 w-3 mr-1" />
-                          {strings.cooperationMode}
-                        </Badge>
-                      )}
-                      {isCurrentPlayerHost && (
-                        <SoundButton
-                          onClick={() => handleGameModeChange("")}
-                          variant="outline"
-                          size="sm"
-                          className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl shadow-sm"
+          <div className="w-full max-w-2xl mx-auto mb-8">
+            <div className="flex border-b border-gray-200 mb-4">
+              <button
+                className={`flex-1 py-2 text-center font-semibold transition-colors duration-200 ${lobbyTab === 'main' ? 'border-b-2 border-blue-500 text-blue-700 bg-white/10' : 'text-gray-300 hover:text-blue-400'}`}
+                onClick={() => setLobbyTab('main')}
+              >
+                {strings.players} & {strings.gameModes}
+              </button>
+              <button
+                className={`flex-1 py-2 text-center font-semibold transition-colors duration-200 ${lobbyTab === 'rules' ? 'border-b-2 border-blue-500 text-blue-700 bg-white/10' : 'text-gray-300 hover:text-blue-400'}`}
+                onClick={() => setLobbyTab('rules')}
+              >
+                {strings.gameRules}
+              </button>
+            </div>
+            <div className="bg-white/10 rounded-2xl shadow-lg p-4 md:p-8">
+              {lobbyTab === 'main' && (
+                <>
+                  {/* Players List */}
+                  <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl w-full max-w-2xl">
+                    <CardHeader className="mobile-padding">
+                      <CardTitle className="flex items-center gap-3 mobile-text-lg text-gray-900">
+                        <div className="w-6 h-6 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                          <Users className="h-3 w-3 text-white" />
+                        </div>
+                        {strings.players} ({room.players.length}/{room.game_mode === "cooperation" ? 2 : 8})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="mobile-spacing-sm mobile-padding">
+                      {room.players.map((player) => (
+                        <div
+                          key={player.id}
+                          className="flex items-center justify-between p-4 bg-white/60 rounded-2xl border border-gray-200/50 hover:bg-white/80 transition-all duration-300 shadow-sm"
                         >
-                          {strings.change}
-                        </SoundButton>
-                      )}
-                    </div>
-                  </div>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              {player.is_host && <Crown className="h-4 w-4 text-yellow-600" />}
+                              <span className="font-medium mobile-text-base text-gray-900">{player.name}</span>
+                              {player.id === playerId && (
+                                <Badge variant={"outline" as any} className="text-xs border-blue-300 text-blue-700 rounded-full">{strings.you}</Badge>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {player.language && (
+                              <Badge variant={"outline" as any} className="text-xs border-gray-300 text-gray-700 rounded-full">
+                                {GAME_LANGUAGES.find(l => l.value === player.language)?.label}
+                              </Badge>
+                            )}
+                            <div className="flex items-center gap-1">
+                              {player.ready ? (
+                                <Badge variant="default" className="text-xs bg-green-600 text-white rounded-full">
+                                  <Check className="h-3 w-3 mr-1" />
+                                  {strings.ready}
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs border-gray-300 text-gray-700 rounded-full">
+                                  <X className="h-3 w-3 mr-1" />
+                                  {strings.notReady}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
 
-                  {/* Target Score */}
-                  {room.game_mode !== "cooperation" && room.game_mode !== "practice" && (
-                    <div className="flex items-center justify-between">
-                      <span className="mobile-text-base font-medium text-gray-900">{strings.targetScore}:</span>
-                      {isCurrentPlayerHost ? (
-                        <Select value={room.target_score.toString()} onValueChange={handleTargetScoreChange}>
-                          <SelectTrigger className="w-24 border-gray-300 rounded-2xl">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {TARGET_SCORES.map(score => (
-                              <SelectItem key={score} value={score.toString()}>
-                                {score}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Badge variant={"outline" as any} className="border-gray-300 text-gray-700 rounded-full">
-                          <Target className="h-3 w-3 mr-1" />
-                          {room.target_score}
-                        </Badge>
-                      )}
-                    </div>
+                  {/* Game Mode Selection */}
+                  {isCurrentPlayerHost && !room.game_mode && (
+                    <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl w-full max-w-2xl">
+                      <CardHeader className="mobile-padding">
+                        <CardTitle className="mobile-text-lg text-gray-900">{strings.selectGameMode}</CardTitle>
+                        <CardDescription className="mobile-text-base text-gray-600">
+                          {strings.chooseHowToPlay}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="mobile-spacing-md mobile-padding">
+                        <div className="space-y-3 mobile-spacing-sm">
+                          <SoundButton
+                            onClick={() => handleGameModeChange("practice")}
+                            variant={"outline" as any}
+                            className="w-full mobile-btn-lg justify-start border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl shadow-sm transition-all duration-300"
+                          >
+                            <div className="w-8 h-8 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg mr-3">
+                              <BookOpen className="h-4 w-4 text-white" />
+                            </div>
+                            <div className="text-left">
+                              <div className="font-medium text-gray-900">{strings.practiceMode}</div>
+                            </div>
+                          </SoundButton>
+                          
+                          <SoundButton
+                            onClick={() => handleGameModeChange("competition")}
+                            variant={"outline" as any}
+                            className="w-full mobile-btn-lg justify-start border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl shadow-sm transition-all duration-300"
+                          >
+                            <div className="w-8 h-8 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg mr-3">
+                              <Zap className="h-4 w-4 text-white" />
+                            </div>
+                            <div className="text-left">
+                              <div className="font-medium text-gray-900">{strings.competitionMode}</div>
+                            </div>
+                          </SoundButton>
+                          
+                          <SoundButton
+                            onClick={() => handleGameModeChange("cooperation")}
+                            variant={"outline" as any}
+                            className="w-full mobile-btn-lg justify-start border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl shadow-sm transition-all duration-300"
+                          >
+                            <div className="w-8 h-8 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg mr-3">
+                              <Heart className="h-4 w-4 text-white" />
+                            </div>
+                            <div className="text-left">
+                              <div className="font-medium text-gray-900">{strings.cooperationMode}</div>
+                            </div>
+                          </SoundButton>
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
 
-                  {/* Host Language (Competition Mode) */}
-                  {room.game_mode === "competition" && (
-                    <div className="flex items-center justify-between">
-                      <span className="mobile-text-base font-medium text-gray-900">{strings.language}:</span>
-                      {isCurrentPlayerHost ? (
-                        <Select value={room.host_language || ""} onValueChange={handleHostLanguageChange}>
-                          <SelectTrigger className="w-32 border-gray-300 rounded-2xl">
+                  {/* Game Settings */}
+                  {room.game_mode && (
+                    <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl w-full max-w-2xl">
+                      <CardHeader className="mobile-padding">
+                        <CardTitle className="flex items-center gap-3 mobile-text-lg text-gray-900">
+                          <div className="w-6 h-6 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <Settings className="h-3 w-3 text-white" />
+                          </div>
+                          {strings.gameSettings}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="mobile-spacing-md mobile-padding">
+                        {/* Current Game Mode */}
+                        <div className="flex items-center justify-between">
+                          <span className="mobile-text-base font-medium text-gray-900">{strings.currentGameMode}:</span>
+                          <div className="flex items-center gap-2">
+                            {room.game_mode === "practice" && (
+                              <Badge variant={"outline" as any} className="bg-blue-50 text-blue-700 border-blue-200 rounded-full">
+                                <BookOpen className="h-3 w-3 mr-1" />
+                                {strings.practiceMode}
+                              </Badge>
+                            )}
+                            {room.game_mode === "competition" && (
+                              <Badge variant={"outline" as any} className="bg-orange-50 text-orange-700 border-orange-200 rounded-full">
+                                <Zap className="h-3 w-3 mr-1" />
+                                {strings.competitionMode}
+                              </Badge>
+                            )}
+                            {room.game_mode === "cooperation" && (
+                              <Badge variant={"outline" as any} className="bg-purple-50 text-purple-700 border-purple-200 rounded-full">
+                                <Heart className="h-3 w-3 mr-1" />
+                                {strings.cooperationMode}
+                              </Badge>
+                            )}
+                            {isCurrentPlayerHost && (
+                              <SoundButton
+                                onClick={() => handleGameModeChange("")}
+                                variant="outline"
+                                size="sm"
+                                className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl shadow-sm"
+                              >
+                                {strings.change}
+                              </SoundButton>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Target Score */}
+                        {room.game_mode !== "cooperation" && room.game_mode !== "practice" && (
+                          <div className="flex items-center justify-between">
+                            <span className="mobile-text-base font-medium text-gray-900">{strings.targetScore}:</span>
+                            {isCurrentPlayerHost ? (
+                              <Select value={room.target_score.toString()} onValueChange={handleTargetScoreChange}>
+                                <SelectTrigger className="w-24 border-gray-300 rounded-2xl">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {TARGET_SCORES.map(score => (
+                                    <SelectItem key={score} value={score.toString()}>
+                                      {score}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Badge variant={"outline" as any} className="border-gray-300 text-gray-700 rounded-full">
+                                <Target className="h-3 w-3 mr-1" />
+                                {room.target_score}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Host Language (Competition Mode) */}
+                        {room.game_mode === "competition" && (
+                          <div className="flex items-center justify-between">
+                            <span className="mobile-text-base font-medium text-gray-900">{strings.language}:</span>
+                            {isCurrentPlayerHost ? (
+                              <Select value={room.host_language || ""} onValueChange={handleHostLanguageChange}>
+                                <SelectTrigger className="w-32 border-gray-300 rounded-2xl">
+                                  <SelectValue placeholder={strings.chooseLanguage} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {getSelectableGameLanguages().map(lang => (
+                                    <SelectItem key={lang.value} value={lang.value}>
+                                      <span className="flex items-center gap-1">
+                                        <FlagIcon country={lang.country} size="sm" />
+                                        {lang.label}
+                                      </span>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Badge variant={"outline" as any} className="border-gray-300 text-gray-700 rounded-full">
+                                <Globe className="h-3 w-3 mr-1" />
+                                <span className="flex items-center gap-1">
+                                  {room.host_language ? (
+                                    <>
+                                      <FlagIcon country={GAME_LANGUAGES.find(l => l.value === room.host_language)?.country || "gb"} size="sm" />
+                                      {GAME_LANGUAGES.find(l => l.value === room.host_language)?.label || strings.notSet}
+                                    </>
+                                  ) : (
+                                    strings.notSet
+                                  )}
+                                </span>
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Language Selection (Practice/Cooperation Mode) */}
+                  {(room.game_mode === "practice" || room.game_mode === "cooperation") && (
+                    <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl w-full max-w-2xl">
+                      <CardHeader className="mobile-padding">
+                        <CardTitle className="mobile-text-lg text-gray-900">{strings.selectYourLanguage}</CardTitle>
+                        <CardDescription className="mobile-text-base text-gray-600">
+                          {strings.chooseLanguageToPractice}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="mobile-padding">
+                        <Select value={currentPlayer?.language || ""} onValueChange={handleLanguageChange}>
+                          <SelectTrigger className="w-full border-gray-300 rounded-2xl">
                             <SelectValue placeholder={strings.chooseLanguage} />
                           </SelectTrigger>
                           <SelectContent>
@@ -2387,183 +2506,145 @@ export default function RoomPage() {
                             ))}
                           </SelectContent>
                         </Select>
-                      ) : (
-                        <Badge variant={"outline" as any} className="border-gray-300 text-gray-700 rounded-full">
-                          <Globe className="h-3 w-3 mr-1" />
-                          <span className="flex items-center gap-1">
-                            {room.host_language ? (
-                              <>
-                                <FlagIcon country={GAME_LANGUAGES.find(l => l.value === room.host_language)?.country || "gb"} size="sm" />
-                                {GAME_LANGUAGES.find(l => l.value === room.host_language)?.label || strings.notSet}
-                              </>
-                            ) : (
-                              strings.notSet
-                            )}
-                          </span>
-                        </Badge>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Rules Section - Collapsible */}
+                  <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl w-full max-w-2xl">
+                    <CardHeader className="mobile-padding">
+                      <CardTitle className="mobile-text-lg text-gray-900 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <BookOpen className="h-3 w-3 text-white" />
+                          </div>
+                          {strings.gameRules}
+                        </div>
+                        <SoundButton
+                          onClick={() => setRulesCollapsed(!rulesCollapsed)}
+                          variant="outline"
+                          size="sm"
+                          className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl shadow-sm"
+                        >
+                          {rulesCollapsed ? '▼' : '▲'}
+                        </SoundButton>
+                      </CardTitle>
+                    </CardHeader>
+                    {!rulesCollapsed && (
+                      <CardContent className="mobile-spacing-sm mobile-text-sm mobile-padding">
+                        <div className="space-y-2 mobile-spacing-sm">
+                          <p className="font-medium mobile-text-base text-gray-900">🎮 {strings.gameModes}:</p>
+                          <div className="space-y-2 ml-4">
+                            <div className="flex items-start gap-2">
+                              <BookOpen className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <div className="min-w-0">
+                                <p className="font-medium text-blue-600 mobile-text-sm">{strings.practiceMode}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <Zap className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                              <div className="min-w-0">
+                                <p className="font-medium text-orange-600 mobile-text-sm">{strings.competitionMode}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <Heart className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                              <div className="min-w-0">
+                                <p className="font-medium text-purple-600 mobile-text-sm">{strings.cooperationMode}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 mobile-spacing-sm">
+                          <p className="font-medium mobile-text-base text-gray-900">🎮 {strings.howToPlay}:</p>
+                          <ul className="space-y-1 text-gray-600 ml-4">
+                            <li className="mobile-text-sm">• {strings.chooseGameMode}</li>
+                            <li className="mobile-text-sm">• {strings.translateEnglishWords}</li>
+                            <li className="mobile-text-sm">• {strings.earnPoints}</li>
+                            <li className="mobile-text-sm">• {strings.firstToReach}</li>
+                          </ul>
+                        </div>
+
+                        <div className="space-y-2 mobile-spacing-sm">
+                          <p className="font-medium mobile-text-base text-gray-900">🌍 {strings.languages}:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {GAME_LANGUAGES.map((lang) => (
+                              <Badge key={lang.value} variant="outline" className="mobile-text-sm flex items-center gap-1 border-gray-300 text-gray-700 rounded-full">
+                                <FlagIcon country={lang.country} size="sm" />
+                                {lang.label}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        {connectionStatus === 'error' && (
+                          <div className="space-y-2 mt-4 p-3 bg-red-50 rounded-2xl border border-red-200">
+                            <p className="font-medium text-red-700 mobile-text-sm">🔧 {strings.connectionIssues}:</p>
+                            <ul className="space-y-1 text-red-600 mobile-text-sm ml-4">
+                              <li>• {strings.tryRefreshing}</li>
+                              <li>• {strings.checkInternet}</li>
+                              <li>• {strings.disableAdBlockers}</li>
+                              <li>• {strings.tryDifferentBrowser}</li>
+                              <li>• {strings.clearCache}</li>
+                            </ul>
+                          </div>
+                        )}
+                      </CardContent>
+                    )}
+                  </Card>
+
+                  {/* Ready/Start Button */}
+                  {room.game_mode && (
+                    <div className="space-y-4 w-full max-w-2xl">
+                      {/* Ready Button */}
+                      <div className="flex justify-center">
+                        <SoundButton
+                          onClick={handleReadyToggle}
+                          className={`mobile-btn-lg px-8 rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105 ${
+                            currentPlayer?.ready 
+                              ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white" 
+                              : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                          }`}
+                          disabled={
+                            (room.game_mode === "practice" || room.game_mode === "cooperation") && !currentPlayer?.language ||
+                            room.game_mode === "competition" && !room.host_language
+                          }
+                        >
+                          {currentPlayer?.ready ? (
+                            <>
+                              <Check className="h-5 w-5 mr-2" />
+                              {strings.ready}!
+                            </>
+                          ) : (
+                            strings.readyToPlay
+                          )}
+                        </SoundButton>
+                      </div>
+
+                      {/* Start Game Button (Host Only) */}
+                      {isCurrentPlayerHost && room.players.every(p => p.ready) && (
+                        <div className="flex justify-center">
+                          <SoundButton
+                            onClick={handleStartGame}
+                            className="mobile-btn-lg px-8 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105"
+                          >
+                            <Play className="h-5 w-5 mr-2" />
+                            {strings.startGame}
+                          </SoundButton>
+                        </div>
                       )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Language Selection (Practice/Cooperation Mode) */}
-            {(room.game_mode === "practice" || room.game_mode === "cooperation") && (
-              <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl w-full max-w-2xl">
-                <CardHeader className="mobile-padding">
-                  <CardTitle className="mobile-text-lg text-gray-900">{strings.selectYourLanguage}</CardTitle>
-                  <CardDescription className="mobile-text-base text-gray-600">
-                    {strings.chooseLanguageToPractice}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="mobile-padding">
-                  <Select value={currentPlayer?.language || ""} onValueChange={handleLanguageChange}>
-                    <SelectTrigger className="w-full border-gray-300 rounded-2xl">
-                      <SelectValue placeholder={strings.chooseLanguage} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getSelectableGameLanguages().map(lang => (
-                        <SelectItem key={lang.value} value={lang.value}>
-                          <span className="flex items-center gap-1">
-                            <FlagIcon country={lang.country} size="sm" />
-                            {lang.label}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Rules Section - Collapsible */}
-            <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl w-full max-w-2xl">
-              <CardHeader className="mobile-padding">
-                <CardTitle className="mobile-text-lg text-gray-900 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
-                      <BookOpen className="h-3 w-3 text-white" />
-                    </div>
-                    {strings.gameRules}
-                  </div>
-                  <SoundButton
-                    onClick={() => setRulesCollapsed(!rulesCollapsed)}
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl shadow-sm"
-                  >
-                    {rulesCollapsed ? '▼' : '▲'}
-                  </SoundButton>
-                </CardTitle>
-              </CardHeader>
-              {!rulesCollapsed && (
-                <CardContent className="mobile-spacing-sm mobile-text-sm mobile-padding">
-                  <div className="space-y-2 mobile-spacing-sm">
-                    <p className="font-medium mobile-text-base text-gray-900">🎮 {strings.gameModes}:</p>
-                    <div className="space-y-2 ml-4">
-                      <div className="flex items-start gap-2">
-                        <BookOpen className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <p className="font-medium text-blue-600 mobile-text-sm">{strings.practiceMode}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Zap className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <p className="font-medium text-orange-600 mobile-text-sm">{strings.competitionMode}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Heart className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <p className="font-medium text-purple-600 mobile-text-sm">{strings.cooperationMode}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 mobile-spacing-sm">
-                    <p className="font-medium mobile-text-base text-gray-900">🎮 {strings.howToPlay}:</p>
-                    <ul className="space-y-1 text-gray-600 ml-4">
-                      <li className="mobile-text-sm">• {strings.chooseGameMode}</li>
-                      <li className="mobile-text-sm">• {strings.translateEnglishWords}</li>
-                      <li className="mobile-text-sm">• {strings.earnPoints}</li>
-                      <li className="mobile-text-sm">• {strings.firstToReach}</li>
-                    </ul>
-                  </div>
-
-                  <div className="space-y-2 mobile-spacing-sm">
-                    <p className="font-medium mobile-text-base text-gray-900">🌍 {strings.languages}:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {GAME_LANGUAGES.map((lang) => (
-                        <Badge key={lang.value} variant="outline" className="mobile-text-sm flex items-center gap-1 border-gray-300 text-gray-700 rounded-full">
-                          <FlagIcon country={lang.country} size="sm" />
-                          {lang.label}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {connectionStatus === 'error' && (
-                    <div className="space-y-2 mt-4 p-3 bg-red-50 rounded-2xl border border-red-200">
-                      <p className="font-medium text-red-700 mobile-text-sm">🔧 {strings.connectionIssues}:</p>
-                      <ul className="space-y-1 text-red-600 mobile-text-sm ml-4">
-                        <li>• {strings.tryRefreshing}</li>
-                        <li>• {strings.checkInternet}</li>
-                        <li>• {strings.disableAdBlockers}</li>
-                        <li>• {strings.tryDifferentBrowser}</li>
-                        <li>• {strings.clearCache}</li>
-                      </ul>
-                    </div>
-                  )}
-                </CardContent>
+                </>
               )}
-            </Card>
-
-            {/* Ready/Start Button */}
-            {room.game_mode && (
-              <div className="space-y-4 w-full max-w-2xl">
-                {/* Ready Button */}
-                <div className="flex justify-center">
-                  <SoundButton
-                    onClick={handleReadyToggle}
-                    className={`mobile-btn-lg px-8 rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105 ${
-                      currentPlayer?.ready 
-                        ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white" 
-                        : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
-                    }`}
-                    disabled={
-                      (room.game_mode === "practice" || room.game_mode === "cooperation") && !currentPlayer?.language ||
-                      room.game_mode === "competition" && !room.host_language
-                    }
-                  >
-                    {currentPlayer?.ready ? (
-                      <>
-                        <Check className="h-5 w-5 mr-2" />
-                        {strings.ready}!
-                      </>
-                    ) : (
-                      strings.readyToPlay
-                    )}
-                  </SoundButton>
-                </div>
-
-                {/* Start Game Button (Host Only) */}
-                {isCurrentPlayerHost && room.players.every(p => p.ready) && (
-                  <div className="flex justify-center">
-                    <SoundButton
-                      onClick={handleStartGame}
-                      className="mobile-btn-lg px-8 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105"
-                    >
-                      <Play className="h-5 w-5 mr-2" />
-                      {strings.startGame}
-                    </SoundButton>
-                  </div>
-                )}
-              </div>
-            )}
-            
+              {lobbyTab === 'rules' && (
+                <>
+                  {/* Rules Section - Collapsible or always expanded on desktop */}
+                  {/* ...existing rules section code... */}
+                </>
+              )}
+            </div>
           </div>
         )}
 
