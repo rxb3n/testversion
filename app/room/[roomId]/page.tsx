@@ -1567,72 +1567,7 @@ export default function RoomPage() {
     
     // Handle visual feedback for competition mode
     if (room?.game_mode === "competition") {
-      if (isTimeout) {
-        setCompetitionFeedback({
-          show: true,
-          type: 'timeout',
-          playerName: currentPlayer?.name || 'Player',
-          fadeOut: false
-        });
-        // Wait 1 second before loading the next question
-        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-        feedbackTimeoutRef.current = setTimeout(() => {
-          setCompetitionFeedback((fb: typeof competitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
-          setTimeout(() => setCompetitionFeedback(null), 500);
-          setCurrentQuestion(null);
-          setSelectedAnswer("");
-          setIsAnswering(false);
-        }, 1000);
-      } else if (isCorrect) {
-        // Defensive: ensure timeLimit and timeLeft are numbers
-        const timeLimit = typeof currentQuestion.timeLimit === 'number' && !isNaN(currentQuestion.timeLimit) ? currentQuestion.timeLimit : 10;
-        const timeUsed = typeof timeLeft === 'number' && !isNaN(timeLeft) ? timeLeft : 0;
-        const points = Math.max(1, 10 - (timeLimit - timeUsed));
-        console.log('🏆 Awarding points:', points, 'to player:', playerId, 'timeLimit:', timeLimit, 'timeLeft:', timeUsed);
-        setRoom((prevRoom: Room | null) => {
-          if (!prevRoom) return prevRoom;
-          return {
-            ...prevRoom,
-            players: prevRoom.players.map(p => {
-              const safeScore = typeof p.score === 'number' && !isNaN(p.score) ? p.score : 0;
-              return p.id === playerId ? { ...p, score: safeScore + points } : p;
-            })
-          };
-        });
-        setCompetitionFeedback({
-          show: true,
-          type: 'correct',
-          word: currentQuestion.correctAnswer,
-          playerName: currentPlayer?.name || 'Player',
-          fadeOut: false
-        });
-        console.log('✅ Correct answer feedback set');
-        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-        feedbackTimeoutRef.current = setTimeout(() => {
-          setCompetitionFeedback((fb: typeof competitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
-          setTimeout(() => setCompetitionFeedback(null), 500);
-          setCurrentQuestion(null);
-          setSelectedAnswer("");
-          setIsAnswering(false);
-        }, 1000);
-      } else {
-        setCompetitionFeedback({
-          show: true,
-          type: 'incorrect',
-          word: currentQuestion.correctAnswer,
-          playerName: currentPlayer?.name || 'Player',
-          fadeOut: false
-        });
-        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-        feedbackTimeoutRef.current = setTimeout(() => {
-          setCompetitionFeedback((fb: typeof competitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
-          setTimeout(() => setCompetitionFeedback(null), 500);
-          setCurrentQuestion(null);
-          setSelectedAnswer("");
-          setIsAnswering(false);
-        }, 1000);
-      }
-      // Emit answer to server
+      // Only emit answer to server, let server events update score and feedback
       socket.emit("answer", {
         roomId,
         playerId,
