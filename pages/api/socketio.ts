@@ -673,6 +673,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           callback({ room: updatedRoom })
           io.to(roomId).emit("room-update", { room: updatedRoom })
 
+          // START PRACTICE TIMER ON GAME START
+          if (room.game_mode === "practice") {
+            // If a timer is already running for this room, do nothing
+            if (!practiceTimers.has(roomId)) {
+              let timeLeft = 60;
+              const interval = setInterval(() => {
+                timeLeft -= 1;
+                io.to(roomId).emit("practice-timer-tick", { timeLeft });
+                if (timeLeft <= 0) {
+                  clearInterval(interval);
+                  practiceTimers.delete(roomId);
+                  io.to(roomId).emit("practice-timeout", {
+                    playerId: playerId,
+                    correctAnswer: "Practice session ended"
+                  });
+                  updateRoom(roomId, {
+                    game_state: "finished"
+                  }).then(async () => {
+                    const updatedRoom = await getRoom(roomId);
+                    io.to(roomId).emit("room-update", { room: updatedRoom });
+                  }).catch(error => {
+                    console.error('❌ Error updating room state on practice timeout:', error);
+                  });
+                }
+              }, 1000);
+              practiceTimers.set(roomId, { timeLeft, interval });
+            }
+          }
+
           if (room.game_mode === "cooperation") {
             io.to(roomId).emit("cooperation-waiting", { isWaiting: true })
             setTimeout(() => {
@@ -931,7 +960,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const updatedRoom = await getRoom(roomId);
                 io.to(roomId).emit("room-update", { room: updatedRoom });
               }).catch(error => {
-                console.error(`❌ Error updating room state on practice timeout:`, error);
+                console.error('❌ Error updating room state on practice timeout:', error);
               });
             }
           }, 1000);
