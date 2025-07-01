@@ -1979,26 +1979,24 @@ export default function RoomPage() {
     return bestMatch;
   };
 
-  // Loading state
+  // Loading state - Replace with seamless transition
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">
-              {isHost ? strings.createRoom : strings.joinRoom}
-            </h2>
-            <p className="text-gray-600 text-center">
-              {connectionStatus === 'connecting' ? strings.connecting : strings.settingUpRoom}
-            </p>
-            <div className="mt-4 text-sm text-gray-500">
-              <p>{strings.room}: {roomId}</p>
-              <p>{strings.players}: {decodeURIComponent(playerName || '')}</p>
-              <p>{strings.role}: {isHost ? strings.host : strings.players}</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-white mb-4 mx-auto" />
+          <h2 className="text-xl font-semibold mb-2">
+            {isHost ? strings.createRoom : strings.joinRoom}
+          </h2>
+          <p className="text-gray-300 text-center">
+            {connectionStatus === 'connecting' ? strings.connecting : strings.settingUpRoom}
+          </p>
+          <div className="mt-4 text-sm text-gray-400">
+            <p>{strings.room}: {roomId}</p>
+            <p>{strings.players}: {decodeURIComponent(playerName || '')}</p>
+            <p>{strings.role}: {isHost ? strings.host : strings.players}</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -2105,7 +2103,7 @@ export default function RoomPage() {
   const isPlaying = room?.game_state === 'playing';
   const charDensity = isLobby ? 2 : 1; // 2x density in lobby
   const floatBase = isLobby ? 18 : 8; // denser grid in lobby
-  const floatSpeed = isLobby ? 18 : 30; // faster in lobby
+  const floatSpeed = isLobby ? 25 : 30; // slower than before but still faster than home
   const letterColor = isLobby || isPlaying ? 'text-white/40' : 'text-black/20';
 
 
@@ -2260,7 +2258,7 @@ export default function RoomPage() {
                 {strings.gameRules}
               </button>
             </div>
-            <div className="bg-white/10 rounded-2xl shadow-lg p-4 md:p-8">
+            <div className="bg-white/80 rounded-2xl shadow-lg p-4 md:p-8 border border-gray-200/50 backdrop-blur-sm">
               {lobbyTab === 'main' && (
                 <>
                   {/* Players List */}
@@ -2641,8 +2639,66 @@ export default function RoomPage() {
               )}
               {lobbyTab === 'rules' && (
                 <>
-                  {/* Rules Section - Collapsible or always expanded on desktop */}
-                  {/* ...existing rules section code... */}
+                  {/* Rules Section */}
+                  <Card className="mobile-card bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-lg rounded-3xl w-full max-w-2xl">
+                    <CardHeader className="mobile-padding">
+                      <CardTitle className="mobile-text-lg text-gray-900 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <BookOpen className="h-3 w-3 text-white" />
+                          </div>
+                          {strings.gameRules}
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="mobile-spacing-sm mobile-text-sm mobile-padding">
+                      <div className="space-y-2 mobile-spacing-sm">
+                        <p className="font-medium mobile-text-base text-gray-900">🎮 {strings.gameModes}:</p>
+                        <div className="space-y-2 ml-4">
+                          <div className="flex items-start gap-2">
+                            <BookOpen className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="font-medium text-blue-600 mobile-text-sm">{strings.practiceMode}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <Zap className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="font-medium text-orange-600 mobile-text-sm">{strings.competitionMode}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <Heart className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="font-medium text-purple-600 mobile-text-sm">{strings.cooperationMode}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 mobile-spacing-sm">
+                        <p className="font-medium mobile-text-base text-gray-900">🎮 {strings.howToPlay}:</p>
+                        <ul className="space-y-1 text-gray-600 ml-4">
+                          <li className="mobile-text-sm">• {strings.chooseGameMode}</li>
+                          <li className="mobile-text-sm">• {strings.translateEnglishWords}</li>
+                          <li className="mobile-text-sm">• {strings.earnPoints}</li>
+                          <li className="mobile-text-sm">• {strings.firstToReach}</li>
+                        </ul>
+                      </div>
+
+                      <div className="space-y-2 mobile-spacing-sm">
+                        <p className="font-medium mobile-text-base text-gray-900">🌍 {strings.languages}:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {GAME_LANGUAGES.map((lang) => (
+                            <Badge key={lang.value} variant="outline" className="mobile-text-sm flex items-center gap-1 border-gray-300 text-gray-700 rounded-full">
+                              <FlagIcon country={lang.country} size="sm" />
+                              {lang.label}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </>
               )}
             </div>
