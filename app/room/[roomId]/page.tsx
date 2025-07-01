@@ -864,14 +864,15 @@ export default function RoomPage() {
       if (answeringPlayer) {
         // Calculate points: 10 - (time taken to answer)
         const points = Math.max(1, 10 - (currentQuestion.timeLimit - timeLeft));
-        // Update score for current player
+        console.log('🏆 Awarding points:', points, 'to player:', playerId);
         setRoom((prevRoom: Room | null) => {
           if (!prevRoom) return prevRoom;
           return {
             ...prevRoom,
-            players: prevRoom.players.map(p =>
-              p.id === playerId ? { ...p, score: (p.score || 0) + points } : p
-            )
+            players: prevRoom.players.map(p => {
+              const safeScore = typeof p.score === 'number' && !isNaN(p.score) ? p.score : 0;
+              return p.id === playerId ? { ...p, score: safeScore + points } : p;
+            })
           };
         });
         setCompetitionFeedback({
@@ -881,6 +882,15 @@ export default function RoomPage() {
           playerName: answeringPlayer.name,
           fadeOut: false
         });
+        console.log('✅ Correct answer feedback set');
+        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = setTimeout(() => {
+          setCompetitionFeedback((fb: typeof competitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
+          setTimeout(() => setCompetitionFeedback(null), 500);
+          setCurrentQuestion(null);
+          setSelectedAnswer("");
+          setIsAnswering(false);
+        }, 1000);
       }
     });
 
@@ -1574,14 +1584,15 @@ export default function RoomPage() {
       } else if (isCorrect) {
         // Calculate points: 10 - (time taken to answer)
         const points = Math.max(1, 10 - (currentQuestion.timeLimit - timeLeft));
-        // Update score for current player
+        console.log('🏆 Awarding points:', points, 'to player:', playerId);
         setRoom((prevRoom: Room | null) => {
           if (!prevRoom) return prevRoom;
           return {
             ...prevRoom,
-            players: prevRoom.players.map(p =>
-              p.id === playerId ? { ...p, score: (p.score || 0) + points } : p
-            )
+            players: prevRoom.players.map(p => {
+              const safeScore = typeof p.score === 'number' && !isNaN(p.score) ? p.score : 0;
+              return p.id === playerId ? { ...p, score: safeScore + points } : p;
+            })
           };
         });
         setCompetitionFeedback({
@@ -1591,6 +1602,7 @@ export default function RoomPage() {
           playerName: currentPlayer?.name || 'Player',
           fadeOut: false
         });
+        console.log('✅ Correct answer feedback set');
         if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
         feedbackTimeoutRef.current = setTimeout(() => {
           setCompetitionFeedback((fb: typeof competitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
