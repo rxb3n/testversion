@@ -866,14 +866,14 @@ export default function RoomPage() {
     });
 
     // Competition feedback events
-    newSocket.on("competition-correct-answer", ({ playerId: answerPlayerId, word }: { playerId: string; word: string }) => {
-      console.log('[COMPETITION FEEDBACK] Received competition-correct-answer:', { answerPlayerId, word, localPlayerId: playerId });
+    newSocket.on("competition-correct-answer", ({ playerId: answerPlayerId, word, points }: { playerId: string; word: string; points: number }) => {
+      console.log('[COMPETITION FEEDBACK] Received competition-correct-answer:', { answerPlayerId, word, points, localPlayerId: playerId });
       if (answerPlayerId !== playerId) return; // Only show feedback for the answering player
       setCompetitionFeedback({
         show: true,
         type: 'correct',
         correctAnswer: word,
-        points: timeLeft, // Points = remaining time
+        points: points, // Use the actual points from server, not timeLeft
         fadeOut: false
       });
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
@@ -919,8 +919,12 @@ export default function RoomPage() {
     });
 
     newSocket.on("competition-timeout", ({ playerId: timeoutPlayerId }: { playerId: string }) => {
-      console.log('[COMPETITION FEEDBACK] Received competition-timeout:', { timeoutPlayerId, localPlayerId: playerId });
-      if (timeoutPlayerId !== playerId && playerId) return;
+      console.log('[COMPETITION FEEDBACK] Received competition-timeout:', { timeoutPlayerId, localPlayerId: playerId, currentQuestion: currentQuestionRef.current });
+      if (timeoutPlayerId !== playerId && playerId) {
+        console.log('[COMPETITION FEEDBACK] Timeout not for this player, ignoring');
+        return;
+      }
+      console.log('[COMPETITION FEEDBACK] Setting timeout feedback for this player');
       setCompetitionFeedback({
         show: true,
         type: 'timeout',
@@ -930,6 +934,7 @@ export default function RoomPage() {
       });
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = setTimeout(() => {
+        console.log('[COMPETITION FEEDBACK] Fading out timeout feedback');
         setCompetitionFeedback((fb: any) => fb ? { ...fb, fadeOut: true } : null);
         setTimeout(() => {
           setCompetitionFeedback(null);
@@ -1512,7 +1517,7 @@ export default function RoomPage() {
 
   // Handle answer submission with improved feedback logic
   const handleAnswerSubmit = async (answer: string, isTimeout: boolean = false) => {
-    console.log('[COMPETITION] handleAnswerSubmit called', { answer, isTimeout, currentQuestion, isAnswering });
+    console.log('[COMPETITION] handleAnswerSubmit called', { answer, isTimeout, currentQuestion, isAnswering, timeLeft });
     if (isAnswering || !currentQuestion || !socket) return;
     
     setIsAnswering(true);
@@ -1590,6 +1595,7 @@ export default function RoomPage() {
     
     // Handle visual feedback for competition mode
     if (room?.game_mode === "competition") {
+      console.log('[COMPETITION] Emitting answer to server:', { answer, isCorrect, timeLeft: currentTimeLeft, isTimeout, correctAnswer: currentQuestion.correctAnswer });
       // Only emit answer to server, let server events update score and feedback
       socket.emit("answer", {
         roomId,

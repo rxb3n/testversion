@@ -770,7 +770,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             if (isTimeout) {
               io.to(roomId).emit("competition-timeout", { playerId });
             } else if (isCorrect) {
-              io.to(roomId).emit("competition-correct-answer", { playerId, word: correctAnswer });
+              const pointsEarned = Math.max(1, timeLeft);
+              io.to(roomId).emit("competition-correct-answer", { playerId, word: correctAnswer, points: pointsEarned });
             } else {
               io.to(roomId).emit("competition-incorrect-answer", { playerId, correctAnswer });
             }
