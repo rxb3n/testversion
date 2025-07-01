@@ -742,7 +742,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           } else if (!isPracticeMode) {
             newScore = Math.max(0, player.score - 5)
           }
-          
+
+          // ADDED LOGGING FOR DEBUGGING
+          console.log("[COMPETITION DEBUG] answer:", answer)
+          console.log("[COMPETITION DEBUG] correctAnswer:", correctAnswer)
+          console.log("[COMPETITION DEBUG] isCorrect:", isCorrect)
+          console.log("[COMPETITION DEBUG] isTimeout:", isTimeout)
+          console.log("[COMPETITION DEBUG] timeLeft:", timeLeft)
+          console.log("[COMPETITION DEBUG] oldScore:", player.score)
+          console.log("[COMPETITION DEBUG] newScore:", newScore)
+
           updateRoomActivityTracker(roomId, playerId)
           
           await updatePlayer(playerId, { score: newScore })
