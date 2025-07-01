@@ -573,30 +573,3 @@
 .btn-unique:active {
   transform: scale(0.95);
 }
-
-@keyframes fade-pulse {
-  0% {
-    opacity: 0;
-    transform: scale(1);
-  }
-  10% {
-    opacity: 0.7;
-    transform: scale(1.01);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.03);
-  }
-  90% {
-    opacity: 0.7;
-    transform: scale(1.01);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1);
-  }
-}
-
-.animate-fade-pulse {
-  animation: fade-pulse 0.6s cubic-bezier(0.4,0,0.2,1);
-}
