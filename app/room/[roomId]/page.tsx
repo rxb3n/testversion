@@ -1474,6 +1474,42 @@ export default function RoomPage() {
     
     // Handle practice mode differently
     if (room?.game_mode === "practice") {
+      // Show feedback immediately on answer
+      if (isTimeout) {
+        setPracticeCompetitionFeedback({
+          show: true,
+          type: 'timeout',
+          word: currentQuestion.correctAnswer,
+          playerName: currentPlayer?.name || 'Player',
+          correctAnswer: currentQuestion.correctAnswer,
+          fadeOut: false
+        });
+      } else if (isCorrect) {
+        setPracticeCompetitionFeedback({
+          show: true,
+          type: 'correct',
+          word: currentQuestion.correctAnswer,
+          playerName: currentPlayer?.name || 'Player',
+          correctAnswer: currentQuestion.correctAnswer,
+          fadeOut: false
+        });
+      } else {
+        setPracticeCompetitionFeedback({
+          show: true,
+          type: 'incorrect',
+          word: currentQuestion.correctAnswer,
+          playerName: currentPlayer?.name || 'Player',
+          correctAnswer: currentQuestion.correctAnswer,
+          selectedAnswer: answer,
+          fadeOut: false
+        });
+      }
+      // Clear feedback after 2 seconds
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = setTimeout(() => {
+        setPracticeCompetitionFeedback((fb: typeof practiceCompetitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
+        setTimeout(() => setPracticeCompetitionFeedback(null), 500);
+      }, 2000);
       // Emit answer to server with 1 point for correct answers
       socket.emit("answer", {
         roomId,
@@ -1493,7 +1529,6 @@ export default function RoomPage() {
       setCurrentQuestion(null);
       setSelectedAnswer("");
       setIsAnswering(false);
-      // Remove local loadQuestion(room) call
       // Don't reset the practice timer - let it continue counting down
       return;
     }
