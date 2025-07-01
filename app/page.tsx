@@ -726,35 +726,7 @@ export default function HomePage() {
 
               {/* Sidebar */}
               <div className="space-y-6">
-            {/* Audio Settings */}
-                <Card className="bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-2xl rounded-3xl">
-                  <CardHeader className="pb-4 text-center">
-                    <CardTitle className="text-gray-900 text-lg flex items-center justify-center gap-3">
-                      <div className="w-6 h-6 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <Volume2 className="w-3 h-3 text-white" />
-                      </div>
-                      {strings.settings}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                <SoundButton
-                  onClick={() => setShowAudioSettings(!showAudioSettings)}
-                  variant="outline"
-                      className="border-gray-300 text-gray-700 hover:bg-gray-50 w-full rounded-2xl shadow-sm"
-                >
-                  <Volume2 className="h-4 w-4 mr-2" />
-                  {strings.audio}
-                </SoundButton>
-              
-                    {showAudioSettings && (
-                      <div className="mt-4">
-                        <AudioSettings />
-            </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Game Info */}
+            {/* Game Info */}
                 <Card className="bg-white/80 border-gray-200/50 backdrop-blur-sm shadow-2xl rounded-3xl">
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-lg flex items-center justify-center gap-3">

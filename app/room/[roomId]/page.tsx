@@ -1998,6 +1998,52 @@ export default function RoomPage() {
     setPracticeTimerActive(true);
   };
 
+  // ... existing code ...
+  {/* MOBILE TABS FOR LOBBY */}
+  <div className="block sm:hidden w-full max-w-2xl mx-auto mb-4">
+    <div className="flex border-b border-gray-200">
+      <button
+        className={`flex-1 py-2 text-center font-semibold ${lobbyTab === 'main' ? 'border-b-2 border-blue-500 text-blue-700' : 'text-gray-500'}`}
+        onClick={() => setLobbyTab('main')}
+      >
+        {strings.players} & {strings.gameModes}
+      </button>
+      <button
+        className={`flex-1 py-2 text-center font-semibold ${lobbyTab === 'rules' ? 'border-b-2 border-blue-500 text-blue-700' : 'text-gray-500'}`}
+        onClick={() => setLobbyTab('rules')}
+      >
+        {strings.gameRules}
+      </button>
+    </div>
+  </div>
+
+  {/* Main Tab: Players and Game Modes */}
+  {lobbyTab === 'main' && (
+    <div className="block sm:hidden">
+      {/* Players List */}
+      {/* ...existing players list code... */}
+      {/* Game Mode Selection */}
+      {/* ...existing game mode selection code... */}
+      {/* Game Settings, Language Selection, etc. */}
+      {/* ...existing code... */}
+    </div>
+  )}
+
+  {/* Rules Tab */}
+  {lobbyTab === 'rules' && (
+    <div className="block sm:hidden">
+      {/* Rules Section - Collapsible */}
+      {/* ...existing rules section code... */}
+    </div>
+  )}
+
+  {/* Desktop: Show all sections as before */}
+  <div className="hidden sm:block">
+    {/* Players List, Game Modes, Rules, etc. */}
+    {/* ...existing code... */}
+  </div>
+  // ... existing code ...
+
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
       {/* Static Animated Background */}
@@ -2071,34 +2117,6 @@ export default function RoomPage() {
             >
               <LogOut className="h-4 w-4" />
             </SoundButton>
-          </div>
-        </div>
-
-        {/* Top Bar with Room Info, Timer, and Score */}
-        <div className="w-full flex flex-row items-center justify-between px-6 py-3 bg-white/70 shadow-sm rounded-b-3xl mb-6">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-blue-900 text-lg">Room {roomId}</span>
-            {isHost && <Badge className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-300"> <Crown className="h-4 w-4 mr-1 inline" /> Host</Badge>}
-          </div>
-          {room.game_mode === "practice" && room.game_state === "playing" ? (
-            <div className="flex items-center gap-2 bg-blue-50 border-2 border-blue-200 rounded-2xl px-4 py-1 shadow">
-              <Clock className="h-6 w-6 text-blue-600" />
-              <span className="text-2xl font-bold text-blue-700">{practiceTimer}s</span>
-              <span className="text-sm text-gray-600 ml-2">{strings.timeRemaining}</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Trophy className="h-6 w-6 text-yellow-600" />
-              <span className="text-2xl font-bold text-yellow-700">{currentPlayer?.score ?? 0}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <span className="text-green-700 text-xs font-semibold flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-green-400 inline-block"></span> Connected
-            </span>
-            <Button variant="ghost" size="icon" className="ml-2">
-              <RotateCcw className="h-5 w-5" />
-            </Button>
           </div>
         </div>
 
@@ -2195,7 +2213,6 @@ export default function RoomPage() {
                       </div>
                       <div className="text-left">
                         <div className="font-medium text-gray-900">{strings.practiceMode}</div>
-                        <div className="text-sm text-gray-600">{strings.practiceDescription}</div>
                       </div>
                     </SoundButton>
                     
@@ -2209,7 +2226,6 @@ export default function RoomPage() {
                       </div>
                       <div className="text-left">
                         <div className="font-medium text-gray-900">{strings.competitionMode}</div>
-                        <div className="text-sm text-gray-600">{strings.competitionDescription}</div>
                       </div>
                     </SoundButton>
                     
@@ -2223,7 +2239,6 @@ export default function RoomPage() {
                       </div>
                       <div className="text-left">
                         <div className="font-medium text-gray-900">{strings.cooperationMode}</div>
-                        <div className="text-sm text-gray-600">{strings.cooperationDescription}</div>
                       </div>
                     </SoundButton>
                   </div>
@@ -2403,22 +2418,18 @@ export default function RoomPage() {
                         <BookOpen className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                         <div className="min-w-0">
                           <p className="font-medium text-blue-600 mobile-text-sm">{strings.practiceMode}</p>
-                          <p className="text-gray-600 mobile-text-sm">{strings.practiceDescription}</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
                         <Zap className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
                         <div className="min-w-0">
                           <p className="font-medium text-orange-600 mobile-text-sm">{strings.competitionMode}</p>
-                          <p className="text-gray-600 mobile-text-sm">{strings.competitionDescription}</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
                         <Heart className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
                         <div className="min-w-0">
                           <p className="font-medium text-purple-600 mobile-text-sm">{strings.cooperationMode}</p>
-                          <p className="text-gray-600 mobile-text-sm">{strings.cooperationDescription}</p>
-                          <p className="text-gray-600 mobile-text-sm mt-1">⏰ Store up to 10 seconds of unused time per turn and donate it to your teammate to extend their timer.</p>
                         </div>
                       </div>
                     </div>
