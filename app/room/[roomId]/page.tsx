@@ -1082,21 +1082,21 @@ export default function RoomPage() {
       setIsFirstQuestion(true); // Reset first question flag
       // Reset timer-related state
       setPracticeTimer(60);
-      setPracticeTimerActive(false);
       setPracticeFirstAnswerSubmitted(false);
-      // Initialize practice mode timer
       if (updatedRoom.game_mode === "practice") {
+        setPracticeTimerActive(true);
         console.log("🎮 Practice mode game started - initializing state");
         setPracticeWordsAnswered(0);
         setPracticeCorrectAnswers(0);
         setPracticeIncorrectAnswers(0);
         setPracticeAccuracy(0);
         setPracticeBackgroundPulse(null);
-        // Don't start timer yet - wait for first answer
         // Load first question for practice mode
         setTimeout(() => {
           loadQuestion(updatedRoom);
         }, 1000);
+      } else {
+        setPracticeTimerActive(false);
       }
     });
 
@@ -1116,21 +1116,21 @@ export default function RoomPage() {
       setIsFirstQuestion(true); // Reset first question flag
       // Reset timer-related state
       setPracticeTimer(60);
-      setPracticeTimerActive(false);
       setPracticeFirstAnswerSubmitted(false);
-      // Initialize practice mode timer
       if (updatedRoom.game_mode === "practice") {
+        setPracticeTimerActive(true);
         console.log("🔄 Practice mode room restarted - initializing state");
         setPracticeWordsAnswered(0);
         setPracticeCorrectAnswers(0);
         setPracticeIncorrectAnswers(0);
         setPracticeAccuracy(0);
         setPracticeBackgroundPulse(null);
-        // Don't start timer yet - wait for first answer
         // Load first question for practice mode
         setTimeout(() => {
           loadQuestion(updatedRoom);
         }, 1000);
+      } else {
+        setPracticeTimerActive(false);
       }
     });
 
@@ -1474,63 +1474,6 @@ export default function RoomPage() {
     
     // Handle practice mode differently
     if (room?.game_mode === "practice") {
-      // Start timer on first answer if not already started
-      if (!practiceTimerActive && !practiceFirstAnswerSubmitted) {
-        console.log("🚀 Starting practice timer on first answer submission");
-        setPracticeFirstAnswerSubmitted(true);
-        startPracticeTimer();
-        
-        // Emit first answer event to notify other players
-        socket.emit("practice-first-answer", { roomId, playerId });
-      }
-      
-      if (isCorrect) {
-        // Increment words answered and correct answers for correct answers
-        setPracticeWordsAnswered(prev => prev + 1);
-        setPracticeCorrectAnswers(prev => prev + 1);
-        audioRef.current.playSuccess();
-        
-        // Trigger background pulse for correct answer
-        setPracticeBackgroundPulse('correct');
-        setTimeout(() => setPracticeBackgroundPulse(null), 1500);
-        
-        // Show feedback for correct answers
-        setPracticeCompetitionFeedback({
-          show: true,
-          type: 'correct',
-          word: currentQuestion.correctAnswer,
-          playerName: currentPlayer?.name || 'Player',
-          correctAnswer: currentQuestion.correctAnswer,
-          fadeOut: false
-        });
-      } else {
-        // Track incorrect answers but no penalty
-        setPracticeIncorrectAnswers(prev => prev + 1);
-        audioRef.current.playFailure();
-        
-        // Trigger background pulse for incorrect answer
-        setPracticeBackgroundPulse('incorrect');
-        setTimeout(() => setPracticeBackgroundPulse(null), 1500);
-        
-        // Show feedback for incorrect answers
-        setPracticeCompetitionFeedback({
-          show: true,
-          type: 'incorrect',
-          word: currentQuestion.correctAnswer,
-          playerName: currentPlayer?.name || 'Player',
-          correctAnswer: currentQuestion.correctAnswer,
-          selectedAnswer: answer,
-          fadeOut: false
-        });
-      }
-      
-      // Clear feedback after 2 seconds
-      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-      feedbackTimeoutRef.current = setTimeout(() => {
-        setPracticeCompetitionFeedback((fb: typeof practiceCompetitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
-        setTimeout(() => setPracticeCompetitionFeedback(null), 500);
-      }, 2000);
-      
       // Emit answer to server with 1 point for correct answers
       socket.emit("answer", {
         roomId,
@@ -1546,12 +1489,10 @@ export default function RoomPage() {
           correctAnswer: currentQuestion.correctAnswer
         }
       }, () => {});
-      
       // Clear current question and selected answer
       setCurrentQuestion(null);
       setSelectedAnswer("");
       setIsAnswering(false);
-      
       // Remove local loadQuestion(room) call
       // Don't reset the practice timer - let it continue counting down
       return;
