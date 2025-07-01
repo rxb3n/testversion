@@ -270,13 +270,15 @@ export default function RoomPage() {
     const [showLoadingTransition, setShowLoadingTransition] = useState(false);
 
       // Add fade overlay state
+  const [fadeOpacity, setFadeOpacity] = useState(1);
   const [showFadeOverlay, setShowFadeOverlay] = useState(true);
 
-  // Fade overlay effect
   useEffect(() => {
     if (room?.game_state === 'lobby' || room?.game_state === 'playing') {
+      setFadeOpacity(1);
       setShowFadeOverlay(true);
-      setTimeout(() => setShowFadeOverlay(false), 500); // 0.5s fade
+      setTimeout(() => setFadeOpacity(0), 10); // Start fade after mount
+      setTimeout(() => setShowFadeOverlay(false), 510); // Remove after fade (0.5s)
     }
   }, [room?.game_state]);
 
@@ -2155,10 +2157,10 @@ export default function RoomPage() {
   )}
 
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-all duration-1000 ${showLoadingTransition ? 'bg-black' : gradientClass}`}>
+    <div className={`min-h-screen relative overflow-hidden ${gradientClass}`}>
       {/* Black fade overlay for gradient fade-in */}
       {showFadeOverlay && (
-        <div className="fixed inset-0 z-40 bg-black transition-opacity duration-500 pointer-events-none" style={{ opacity: showFadeOverlay ? 1 : 0 }} />
+        <div className="fixed inset-0 z-40 bg-black transition-opacity duration-500 pointer-events-none" style={{ opacity: fadeOpacity }} />
       )}
       {/* Static Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
