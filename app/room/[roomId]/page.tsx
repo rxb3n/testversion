@@ -266,6 +266,17 @@ export default function RoomPage() {
   // Add after other refs
   const currentQuestionRef = useRef<Question | null>(null);
 
+    // Add loading transition state
+    const [showLoadingTransition, setShowLoadingTransition] = useState(false);
+
+    // Add useEffect to trigger the transition when entering the lobby
+    useEffect(() => {
+      if (room?.game_state === 'lobby' && !showLoadingTransition) {
+        setShowLoadingTransition(true);
+        setTimeout(() => setShowLoadingTransition(false), 1200); // 1.2s fade
+      }
+    }, [room?.game_state]);
+
   // Top-level useEffect to sync currentQuestionRef
   useEffect(() => {
     currentQuestionRef.current = currentQuestion;
@@ -2097,16 +2108,6 @@ export default function RoomPage() {
   const floatSpeed = isLobby ? 18 : 30; // faster in lobby
   const letterColor = isLobby || isPlaying ? 'text-white/40' : 'text-black/20';
 
-  // Add loading transition state
-  const [showLoadingTransition, setShowLoadingTransition] = useState(false);
-
-  // Add useEffect to trigger the transition when entering the lobby
-  useEffect(() => {
-    if (room?.game_state === 'lobby' && !showLoadingTransition) {
-      setShowLoadingTransition(true);
-      setTimeout(() => setShowLoadingTransition(false), 1200); // 1.2s fade
-    }
-  }, [room?.game_state]);
 
   // Overlay for seamless loading transition
   {showLoadingTransition && (
