@@ -2578,22 +2578,25 @@ export default function RoomPage() {
                       <div className="flex flex-col items-center w-full">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl mx-auto">
                           {currentQuestion.options.map((option, index) => {
-                            const isCorrect = practiceCompetitionFeedback?.show && option === currentQuestion.correctAnswer;
-                            const isIncorrect = practiceCompetitionFeedback?.show && option === practiceCompetitionFeedback.selectedAnswer && !isCorrect;
+                            let highlightClass = 'bg-white text-black';
+                            if (practiceCompetitionFeedback?.show) {
+                              if (option === currentQuestion.correctAnswer) {
+                                highlightClass = 'bg-green-500 text-white';
+                              } else {
+                                highlightClass = 'bg-red-500 text-white';
+                              }
+                            }
                             return (
                               <SoundButton
                                 key={index}
                                 onClick={() => handleAnswerSubmit(option)}
                                 disabled={isAnswering}
-                                className={`answer-option rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center text-lg font-semibold h-12 w-full mx-auto
-                                  ${isCorrect ? 'bg-green-500 text-white transition-none' : isIncorrect ? 'bg-red-500 text-white' : 'bg-white text-black'}
-                                  ${practiceCompetitionFeedback?.fadeOut ? 'opacity-70 scale-95' : ''}
-                                `}
+                                className={`answer-option rounded-2xl shadow-lg flex items-center justify-center text-lg font-semibold h-12 w-full mx-auto ${highlightClass} ${practiceCompetitionFeedback?.fadeOut ? 'opacity-70 scale-95' : ''}`}
                                 style={{
                                   minHeight: '48px',
                                   maxWidth: '320px',
                                   margin: '0 auto',
-                                  transition: isCorrect ? 'none' : 'all 0.3s',
+                                  transition: 'all 0.3s',
                                 }}
                               >
                                 {option}
