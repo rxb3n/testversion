@@ -887,6 +887,10 @@ export default function RoomPage() {
           setCurrentQuestion(null);
           setSelectedAnswer("");
           setIsAnswering(false);
+          // Automatically load next question for competition mode if game is not finished
+          if (roomRef.current && roomRef.current.game_mode === "competition" && roomRef.current.game_state !== "finished") {
+            setTimeout(() => loadQuestion(roomRef.current!), 100); // slight delay to allow state to clear
+          }
         }, 1000);
       }
     });

@@ -736,8 +736,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           let newScore = player.score
           
           if (isCorrect) {
-            // Fixed scoring: earn (10 - timeLeft) points for correct answers
-            const pointsChange = isPracticeMode ? 1 : Math.max(1, 10 - timeLeft)
+            // Competition scoring: earn points equal to remaining time (timeLeft), min 1
+            const pointsChange = isPracticeMode ? 1 : Math.max(1, timeLeft)
             newScore = player.score + pointsChange
           } else if (!isPracticeMode) {
             newScore = Math.max(0, player.score - 5)
