@@ -3239,188 +3239,95 @@ export default function RoomPage() {
           {/* Finished Game Screen */}
           {room.game_state === "finished" && (
             <div className="max-w-4xl mx-auto space-y-6">
-              {/* Game Statistics */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Game Mode */}
-                <Card className="bg-white/90 backdrop-blur-sm border-yellow-200 shadow-xl rounded-3xl">
+              {/* Statistics Section (now at the top) */}
+              {room.game_mode === "practice" && (
+                <Card className="bg-white/90 backdrop-blur-sm border-blue-200 shadow-xl mb-8 rounded-3xl">
                   <CardHeader className="text-center pb-4">
-                    <CardTitle className="flex items-center justify-center gap-2 text-xl text-yellow-800">
-                      <Gamepad2 className="h-5 w-5" />
-                      {strings.gameMode}
+                    <CardTitle className="flex items-center justify-center gap-2 text-2xl text-blue-800">
+                      <BookOpen className="h-6 w-6" />
+                      Practice Mode Statistics
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center">
-                      {room.game_mode === "practice" && (
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 rounded-full">
-                          <BookOpen className="h-3 w-3 mr-1" />
-                          {strings.practiceMode}
-                        </Badge>
-                      )}
-                      {room.game_mode === "competition" && (
-                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 rounded-full">
-                          <Zap className="h-3 w-3 mr-1" />
-                          {strings.competitionMode}
-                        </Badge>
-                      )}
-                      {room.game_mode === "cooperation" && (
-                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 rounded-full">
-                          <Heart className="h-3 w-3 mr-1" />
-                          {strings.cooperationMode}
-                        </Badge>
-                      )}
-                </div>
-              </CardContent>
-            </Card>
-
-                {/* Language */}
-                <Card className="bg-white/90 backdrop-blur-sm border-yellow-200 shadow-xl rounded-3xl">
-                  <CardHeader className="text-center pb-4">
-                    <CardTitle className="flex items-center justify-center gap-2 text-xl text-yellow-800">
-                      <Globe className="h-5 w-5" />
-                      {strings.language}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center">
-                      {room.game_mode === "competition" && room.host_language ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <FlagIcon country={GAME_LANGUAGES.find(l => l.value === room.host_language)?.country || "gb"} size="sm" />
-                          <span className="text-gray-800">
-                            {GAME_LANGUAGES.find(l => l.value === room.host_language)?.label}
-                          </span>
-          </div>
-                      ) : (
-                        <span className="text-gray-600">{strings.multipleLanguages}</span>
-                      )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {/* Total Words Answered */}
+                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl border border-blue-200">
+                        <Check className="h-6 w-6 text-blue-600" />
+                        <div>
+                          <p className="font-semibold text-blue-800">Words Answered</p>
+                          <p className="text-lg font-bold text-blue-700">{practiceWordsAnswered}</p>
+                        </div>
+                      </div>
+                      {/* Correct Answers */}
+                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-100 to-emerald-100 rounded-2xl border border-green-200">
+                        <Target className="h-6 w-6 text-green-600" />
+                        <div>
+                          <p className="font-semibold text-green-800">Correct Answers</p>
+                          <p className="text-lg font-bold text-green-700">{practiceCorrectAnswers}</p>
+                        </div>
+                      </div>
+                      {/* Incorrect Answers */}
+                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-red-100 to-orange-100 rounded-2xl border border-red-200">
+                        <X className="h-6 w-6 text-red-600" />
+                        <div>
+                          <p className="font-semibold text-red-800">Incorrect Answers</p>
+                          <p className="text-lg font-bold text-red-700">{practiceIncorrectAnswers}</p>
+                        </div>
+                      </div>
+                      {/* Accuracy */}
+                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl border border-purple-200">
+                        <TrendingUp className="h-6 w-6 text-purple-600" />
+                        <div>
+                          <p className="font-semibold text-purple-800">Accuracy</p>
+                          <p className="text-lg font-bold text-purple-700">{practiceAccuracy}%</p>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Target Score */}
-                {room.game_mode !== "cooperation" && (
-                  <Card className="bg-white/90 backdrop-blur-sm border-yellow-200 shadow-xl rounded-3xl">
-                    <CardHeader className="text-center pb-4">
-                      <CardTitle className="flex items-center justify-center gap-2 text-xl text-yellow-800">
-                        <Target className="h-5 w-5" />
-                        {strings.targetScore}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-center">
-                        <Badge variant="outline" className="bg-yellow-100 border-yellow-300 text-yellow-800 rounded-full">
-                          {room.target_score} {strings.points}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Player Count */}
-                <Card className="bg-white/90 backdrop-blur-sm border-yellow-200 shadow-xl rounded-3xl">
+              )}
+              {room.game_mode !== "practice" && (
+                <Card className="bg-white/90 backdrop-blur-sm border-yellow-200 shadow-xl mb-8 rounded-3xl">
                   <CardHeader className="text-center pb-4">
-                    <CardTitle className="flex items-center justify-center gap-2 text-xl text-yellow-800">
-                      <Users className="h-5 w-5" />
-                      {strings.players}
+                    <CardTitle className="flex items-center justify-center gap-2 text-2xl text-yellow-800">
+                      <TrendingUp className="h-6 w-6" />
+                      Statistics
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center">
-                      <Badge variant="outline" className="bg-blue-100 border-blue-300 text-blue-800 rounded-full">
-                        {room.players.length} {strings.participants}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Lives Remaining (Cooperation) */}
-                {room.game_mode === "cooperation" && (
-                  <Card className="bg-white/90 backdrop-blur-sm border-yellow-200 shadow-xl rounded-3xl">
-                    <CardHeader className="text-center pb-4">
-                      <CardTitle className="flex items-center justify-center gap-2 text-xl text-yellow-800">
-                        <Heart className="h-5 w-5" />
-                        {strings.livesRemaining}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-center">
-                        <Badge variant="outline" className="bg-red-100 border-red-300 text-red-800 rounded-full">
-                          {room.cooperation_lives || 0} {strings.lives}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Performance Metrics */}
-                <Card className="bg-white/90 backdrop-blur-sm border-yellow-200 shadow-xl rounded-3xl">
-                  <CardHeader className="text-center pb-4">
-                    <CardTitle className="flex items-center justify-center gap-2 text-xl text-yellow-800">
-                      <TrendingUp className="h-5 w-5" />
-                      {strings.performance}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                <div className="space-y-2">
+                    <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">{strings.questionsAnswered}:</span>
+                        <span className="text-sm text-gray-600">Questions Answered:</span>
                         <Badge variant="outline" className="bg-green-100 border-green-300 text-green-800 rounded-full">
                           {room.question_count || 0}
                         </Badge>
                       </div>
                       {room.game_mode === "cooperation" && (
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">{strings.teamScore}:</span>
+                          <span className="text-sm text-gray-600">Team Score:</span>
                           <Badge variant="outline" className="bg-purple-100 border-purple-300 text-purple-800 rounded-full">
                             {room.cooperation_score || 0}
                           </Badge>
                         </div>
                       )}
-                      {room.game_mode === "practice" && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Words Answered:</span>
-                          <Badge variant="outline" className="bg-blue-100 border-blue-300 text-blue-800 rounded-full">
-                            {practiceWordsAnswered}
-                          </Badge>
-                        </div>
-                      )}
-                      {room.game_mode === "practice" && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Time Remaining:</span>
-                          <Badge variant="outline" className="bg-green-100 border-green-300 text-green-800 rounded-full">
-                            {practiceTimer}s
-                          </Badge>
-                        </div>
-                      )}
+                      {/* Game Duration */}
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Duration:</span>
+                        <Badge variant="outline" className="bg-indigo-100 border-indigo-300 text-indigo-800 rounded-full">
+                          {(() => {
+                            const startTime = new Date(room.created_at);
+                            const endTime = new Date(room.last_activity);
+                            const durationMs = endTime.getTime() - startTime.getTime();
+                            const minutes = Math.floor(durationMs / 60000);
+                            const seconds = Math.floor((durationMs % 60000) / 1000);
+                            return `${minutes}m ${seconds}s`;
+                          })()}
+                        </Badge>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Game Duration */}
-                <Card className="bg-white/90 backdrop-blur-sm border-yellow-200 shadow-xl rounded-3xl">
-                  <CardHeader className="text-center pb-4">
-                    <CardTitle className="flex items-center justify-center gap-2 text-xl text-yellow-800">
-                      <Clock className="h-5 w-5" />
-                      {strings.duration}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center">
-                      <Badge variant="outline" className="bg-indigo-100 border-indigo-300 text-indigo-800 rounded-full">
-                        {(() => {
-                          const startTime = new Date(room.created_at);
-                          const endTime = new Date(room.last_activity);
-                          const durationMs = endTime.getTime() - startTime.getTime();
-                          const minutes = Math.floor(durationMs / 60000);
-                          const seconds = Math.floor((durationMs % 60000) / 1000);
-                          return `${minutes}m ${seconds}s`;
-                        })()}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
+              )}
               {/* Achievements Section */}
               <Card className="bg-white/90 backdrop-blur-sm border-yellow-200 shadow-xl mb-8 rounded-3xl">
                 <CardHeader className="text-center pb-4">
@@ -3543,8 +3450,7 @@ export default function RoomPage() {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Final Scores Section */}
+              {/* Final Results Section */}
               <Card className="bg-white/90 backdrop-blur-sm border-yellow-200 shadow-xl rounded-3xl">
                 <CardHeader className="text-center pb-4">
                   <CardTitle className="flex items-center justify-center gap-2 text-2xl text-yellow-800">
@@ -3625,7 +3531,6 @@ export default function RoomPage() {
                 </div>
                 </CardContent>
               </Card>
-
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
                 {isCurrentPlayerHost && (
@@ -3645,71 +3550,6 @@ export default function RoomPage() {
                   {strings.leaveRoom}
                 </SoundButton>
               </div>
-
-              {/* Practice Mode Statistics Section */}
-              {room.game_mode === "practice" && (
-                <Card className="bg-white/90 backdrop-blur-sm border-blue-200 shadow-xl mb-8 rounded-3xl">
-                  <CardHeader className="text-center pb-4">
-                    <CardTitle className="flex items-center justify-center gap-2 text-2xl text-blue-800">
-                      <BookOpen className="h-6 w-6" />
-                      Practice Mode Statistics
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {/* Total Words Answered */}
-                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl border border-blue-200">
-                        <Check className="h-6 w-6 text-blue-600" />
-                        <div>
-                          <p className="font-semibold text-blue-800">Words Answered</p>
-                          <p className="text-lg font-bold text-blue-700">{practiceWordsAnswered}</p>
-                        </div>
-                      </div>
-                      
-                      {/* Correct Answers */}
-                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-100 to-emerald-100 rounded-2xl border border-green-200">
-                        <Target className="h-6 w-6 text-green-600" />
-                        <div>
-                          <p className="font-semibold text-green-800">Correct Answers</p>
-                          <p className="text-lg font-bold text-green-700">{practiceCorrectAnswers}</p>
-                        </div>
-                      </div>
-                      
-                      {/* Incorrect Answers */}
-                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-red-100 to-orange-100 rounded-2xl border border-red-200">
-                        <X className="h-6 w-6 text-red-600" />
-                        <div>
-                          <p className="font-semibold text-red-800">Incorrect Answers</p>
-                          <p className="text-lg font-bold text-red-700">{practiceIncorrectAnswers}</p>
-                        </div>
-                      </div>
-                      
-                      {/* Accuracy */}
-                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl border border-purple-200">
-                        <TrendingUp className="h-6 w-6 text-purple-600" />
-                        <div>
-                          <p className="font-semibold text-purple-800">Accuracy</p>
-                          <p className="text-lg font-bold text-purple-700">{practiceAccuracy}%</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Words per Minute */}
-                    <div className="mt-6 p-4 bg-gradient-to-r from-yellow-100 to-amber-100 rounded-2xl border border-yellow-200">
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-2 mb-2">
-                          <Zap className="h-5 w-5 text-yellow-600" />
-                          <p className="font-semibold text-yellow-800">Speed</p>
-                        </div>
-                        <p className="text-2xl font-bold text-yellow-700">
-                          {practiceWordsAnswered > 0 ? Math.round((practiceWordsAnswered / 1) * 60) : 0} words per minute
-                        </p>
-                        <p className="text-sm text-yellow-600 mt-1">Based on 60-second session</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
         )}
         </div>
