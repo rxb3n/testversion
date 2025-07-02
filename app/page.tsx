@@ -490,13 +490,25 @@ export default function HomePage() {
       {/* Mouse-based background effect */}
       <div
         ref={bgEffectRef}
-        className="pointer-events-none fixed inset-0 z-0 transition-all duration-500"
+        className="pointer-events-none fixed inset-0 z-0 transition-all duration-300"
         aria-hidden="true"
         style={{
-          background: `radial-gradient(ellipse at ${mousePos.x * 100}% ${mousePos.y * 100}%, rgba(59,130,246,0.18) 0%, rgba(59,130,246,0.10) 40%, transparent 80%)`,
-          transition: 'background 0.3s',
+          background: `radial-gradient(ellipse at ${mousePos.x * 100}% ${mousePos.y * 100}%, rgba(59,130,246,0.25) 0%, rgba(147,51,234,0.15) 30%, rgba(236,72,153,0.10) 60%, transparent 80%)`,
+          transition: 'background 0.3s ease-out',
         }}
       />
+      
+      {/* Pulsing color overlay based on mouse position */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        aria-hidden="true"
+        style={{
+          background: `radial-gradient(circle at ${mousePos.x * 100}% ${mousePos.y * 100}%, rgba(59,130,246,0.08) 0%, transparent 50%)`,
+          animation: 'pulse 2s ease-in-out infinite',
+          transition: 'background 0.2s ease-out',
+        }}
+      />
+      
       {/* Static Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-200 via-cyan-100 to-blue-400"></div>
@@ -611,7 +623,7 @@ export default function HomePage() {
               {/* Main Game Controls */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Player Setup */}
-                <Card className="bg-gradient-to-br from-blue-200/80 via-blue-50/80 to-white/80 shadow-2xl rounded-3xl border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center backdrop-blur-sm">
+                <Card className="shadow-2xl rounded-3xl border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(219, 234, 254, 0.8)', backgroundImage: 'linear-gradient(to bottom right, rgba(219, 234, 254, 0.8), rgba(239, 246, 255, 0.8), rgba(255, 255, 255, 0.8))' }}>
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-xl md:text-2xl flex items-center justify-center gap-3">
                       <div className="w-8 h-8 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -675,7 +687,7 @@ export default function HomePage() {
             </Card>
 
                 {/* Available Rooms */}
-                <Card className="bg-gradient-to-br from-blue-200/80 via-blue-50/80 to-white/80 shadow-2xl rounded-3xl border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center backdrop-blur-sm">
+                <Card className="shadow-2xl rounded-3xl border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(219, 234, 254, 0.8)', backgroundImage: 'linear-gradient(to bottom right, rgba(219, 234, 254, 0.8), rgba(239, 246, 255, 0.8), rgba(255, 255, 255, 0.8))' }}>
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-xl md:text-2xl flex items-center justify-center gap-3">
                       <div className="w-8 h-8 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -754,7 +766,7 @@ export default function HomePage() {
               {/* Sidebar */}
               <div className="space-y-6">
             {/* Game Info */}
-                <Card className="bg-gradient-to-br from-blue-200/80 via-blue-50/80 to-white/80 shadow-2xl rounded-3xl border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center backdrop-blur-sm">
+                <Card className="shadow-2xl rounded-3xl border-none px-8 py-10 min-h-[220px] md:min-h-[260px] flex flex-col justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(219, 234, 254, 0.8)', backgroundImage: 'linear-gradient(to bottom right, rgba(219, 234, 254, 0.8), rgba(239, 246, 255, 0.8), rgba(255, 255, 255, 0.8))' }}>
                   <CardHeader className="pb-4 text-center">
                     <CardTitle className="text-gray-900 text-lg flex items-center justify-center gap-3">
                       <div className="w-6 h-6 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
