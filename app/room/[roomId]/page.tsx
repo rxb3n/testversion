@@ -1222,7 +1222,7 @@ export default function RoomPage() {
       if (newSocket.connected) {
         newSocket.emit("room-activity-ping", { roomId, playerId });
       }
-    }, 30000); // Ping every 30 seconds
+    }, 60000); // Ping every 30 seconds
 
     return () => {
       if (activityPingRef.current) {
@@ -2708,41 +2708,50 @@ export default function RoomPage() {
                       <div className="flex flex-col items-center w-full">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl mx-auto">
                           {currentQuestion.options.map((option, index) => {
-                            let highlightClass = '';
-                            if (room.game_mode === "competition") {
-                              // Default: blue background, black text
-                              highlightClass = 'bg-blue-500 text-black font-bold';
-                              // After answering, show feedback
-                              if (competitionFeedback?.show) {
-                                if (option === currentQuestion.correctAnswer) {
-                                  highlightClass = 'bg-green-500 text-black font-bold';
-                                } else if (option === selectedAnswer) {
-                                  highlightClass = 'bg-red-500 text-black font-bold';
-                                }
-                              }
-                            } else if (practiceCompetitionFeedback?.show) {
-                              if (option === currentQuestion.correctAnswer) {
-                                highlightClass = 'bg-green-500 text-black';
-                              } else {
-                                highlightClass = 'bg-red-500 text-black';
-                              }
-                            } else {
-                              highlightClass = 'bg-white text-black';
-                            }
+                            // Handle both old string format and new object format
+                            const optionValue = typeof option === 'string' ? option : option.value;
+                            const optionRomaji = typeof option === 'object' && option.romaji ? option.romaji : null;
+                            
                             return (
                               <SoundButton
                                 key={index}
-                                onClick={() => handleAnswerSubmit(option)}
+                                onClick={() => handleAnswerSubmit(optionValue)}
                                 disabled={isAnswering}
-                                className={`answer-option rounded-2xl shadow-lg flex items-center justify-center text-lg font-semibold h-12 w-full mx-auto ${practiceCompetitionFeedback?.fadeOut || competitionFeedback?.fadeOut ? 'opacity-70 scale-95' : ''} ${highlightClass}`}
+                                className={`answer-option rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105 ${
+                                  answerFeedback?.show 
+                                    ? optionValue === currentQuestion.correctAnswer 
+                                      ? 'correct' 
+                                      : optionValue === answerFeedback.selectedAnswer 
+                                        ? 'incorrect' 
+                                        : ''
+                                    : ''
+                                }`}
                                 style={{
-                                  minHeight: '48px',
-                                  maxWidth: '320px',
-                                  margin: '0 auto',
-                                  transition: 'all 0.3s',
+                                  backgroundColor: answerFeedback?.show 
+                                    ? optionValue === currentQuestion.correctAnswer 
+                                      ? '#4CAF50' 
+                                      : optionValue === answerFeedback.selectedAnswer 
+                                        ? '#F44336' 
+                                        : 'white'
+                                    : 'white',
+                                  color: answerFeedback?.show 
+                                    ? optionValue === currentQuestion.correctAnswer || optionValue === answerFeedback.selectedAnswer
+                                      ? 'white' 
+                                      : 'black'
+                                    : 'black',
+                                  height: '80px',
+                                  width: '85%',
+                                  transition: 'all 0.5s ease-in-out',
+                                  opacity: answerFeedback?.fadeOut ? 0.7 : 1,
+                                  transform: answerFeedback?.fadeOut ? 'scale(0.98)' : 'scale(1)'
                                 }}
                               >
-                                {option}
+                                <div className="flex flex-col items-center justify-center h-full">
+                                  <span className="text-lg font-medium">{optionValue}</span>
+                                  {optionRomaji && (
+                                    <span className="text-xs text-gray-500 mt-1">{optionRomaji}</span>
+                                  )}
+                                </div>
                               </SoundButton>
                             );
                           })}
@@ -2966,43 +2975,54 @@ export default function RoomPage() {
                   <CardContent className="mobile-padding">
                     {room.game_mode === "practice" || room.game_mode === "competition" ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {currentQuestion.options.map((option, index) => (
-                          <SoundButton
-                            key={index}
-                            onClick={() => handleAnswerSubmit(option)}
-                            disabled={isAnswering}
+                        {currentQuestion.options.map((option, index) => {
+                          // Handle both old string format and new object format
+                          const optionValue = typeof option === 'string' ? option : option.value;
+                          const optionRomaji = typeof option === 'object' && option.romaji ? option.romaji : null;
+                          
+                          return (
+                            <SoundButton
+                              key={index}
+                              onClick={() => handleAnswerSubmit(optionValue)}
+                              disabled={isAnswering}
                               className={`answer-option rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105 ${
-                              answerFeedback?.show 
-                                ? option === currentQuestion.correctAnswer 
-                                  ? 'correct' 
-                                  : option === answerFeedback.selectedAnswer 
-                                    ? 'incorrect' 
-                                    : ''
-                                : ''
-                            }`}
-                            style={{
-                              backgroundColor: answerFeedback?.show 
-                                ? option === currentQuestion.correctAnswer 
-                                  ? '#4CAF50' 
-                                  : option === answerFeedback.selectedAnswer 
-                                    ? '#F44336' 
-                                    : 'white'
-                                : 'white',
-                              color: answerFeedback?.show 
-                                ? option === currentQuestion.correctAnswer || option === answerFeedback.selectedAnswer
-                                  ? 'white' 
-                                  : 'black'
-                                : 'black',
-                              height: '80px',
-                              width: '85%',
-                              transition: 'all 0.5s ease-in-out',
-                              opacity: answerFeedback?.fadeOut ? 0.7 : 1,
-                              transform: answerFeedback?.fadeOut ? 'scale(0.98)' : 'scale(1)'
-                            }}
-                          >
-                            {option}
-                          </SoundButton>
-                        ))}
+                                answerFeedback?.show 
+                                  ? optionValue === currentQuestion.correctAnswer 
+                                    ? 'correct' 
+                                    : optionValue === answerFeedback.selectedAnswer 
+                                      ? 'incorrect' 
+                                      : ''
+                                  : ''
+                              }`}
+                              style={{
+                                backgroundColor: answerFeedback?.show 
+                                  ? optionValue === currentQuestion.correctAnswer 
+                                    ? '#4CAF50' 
+                                    : optionValue === answerFeedback.selectedAnswer 
+                                      ? '#F44336' 
+                                      : 'white'
+                                  : 'white',
+                                color: answerFeedback?.show 
+                                  ? optionValue === currentQuestion.correctAnswer || optionValue === answerFeedback.selectedAnswer
+                                    ? 'white' 
+                                    : 'black'
+                                  : 'black',
+                                height: '80px',
+                                width: '85%',
+                                transition: 'all 0.5s ease-in-out',
+                                opacity: answerFeedback?.fadeOut ? 0.7 : 1,
+                                transform: answerFeedback?.fadeOut ? 'scale(0.98)' : 'scale(1)'
+                              }}
+                            >
+                              <div className="flex flex-col items-center justify-center h-full">
+                                <span className="text-lg font-medium">{optionValue}</span>
+                                {optionRomaji && (
+                                  <span className="text-xs text-gray-500 mt-1">{optionRomaji}</span>
+                                )}
+                              </div>
+                            </SoundButton>
+                          );
+                        })}
                       </div>
                     ) : (
                       <div className="space-y-4">
