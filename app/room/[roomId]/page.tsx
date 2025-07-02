@@ -924,7 +924,7 @@ export default function RoomPage() {
             setTimeout(() => loadQuestion(roomRef.current!), 100);
           }
         }, 250);
-      }, 750);
+      }, 500);
     });
 
     newSocket.on("competition-incorrect-answer", ({ playerId: answerPlayerId, correctAnswer }: { playerId: string; correctAnswer: string }) => {
@@ -950,7 +950,7 @@ export default function RoomPage() {
             setTimeout(() => loadQuestion(roomRef.current!), 100);
           }
         }, 250);
-      }, 750);
+      }, 500);
     });
 
     newSocket.on("competition-timeout", ({ playerId: timeoutPlayerId }: { playerId: string }) => {
@@ -981,7 +981,7 @@ export default function RoomPage() {
             setTimeout(() => loadQuestion(roomRef.current!), 100);
           }
         }, 250);
-      }, 750);
+      }, 500);
     });
 
     // Practice feedback events
@@ -1532,7 +1532,7 @@ export default function RoomPage() {
           setTimeout(() => loadQuestion(roomRef.current!), 100);
         }
       }, 250);
-    }, 1250);
+    }, 500);
     
     // Also send timeout to server for score tracking
     socket.emit("answer", {
@@ -1614,6 +1614,14 @@ export default function RoomPage() {
     
     // Handle practice mode differently
     if (room?.game_mode === "practice") {
+      // Update practice statistics
+      setPracticeWordsAnswered(prev => prev + 1);
+      if (isCorrect) {
+        setPracticeCorrectAnswers(prev => prev + 1);
+      } else {
+        setPracticeIncorrectAnswers(prev => prev + 1);
+      }
+      
       // Show feedback immediately on answer
       if (isTimeout) {
         setPracticeCompetitionFeedback({
@@ -1646,7 +1654,7 @@ export default function RoomPage() {
           fadeOut: false
         });
       }
-      // Keep feedback and highlights for 0.75 seconds, then load next question
+      // Keep feedback and highlights for 0.5 seconds, then load next question
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = setTimeout(() => {
         setPracticeCompetitionFeedback((fb: typeof practiceCompetitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
@@ -1654,7 +1662,7 @@ export default function RoomPage() {
         setCurrentQuestion(null);
         setSelectedAnswer("");
         setIsAnswering(false);
-      }, 750);
+      }, 500);
       // Emit answer to server with 1 point for correct answers
       socket.emit("answer", {
         roomId,
@@ -2722,7 +2730,8 @@ export default function RoomPage() {
                           // Handle both old string format and new object format
                           const optionValue = typeof option === 'string' ? option : option.value;
                           // Use wanakana for proper romaji conversion if target language is Japanese
-                          const optionRomaji = room?.host_language === 'japanese' ? convertToRomaji(optionValue) : null;
+                          const targetLanguage = room?.game_mode === "practice" ? currentPlayer?.language : room?.host_language;
+                          const optionRomaji = targetLanguage === 'japanese' ? convertToRomaji(optionValue) : null;
                           
                           return (
                               <SoundButton
@@ -2991,7 +3000,8 @@ export default function RoomPage() {
                           // Handle both old string format and new object format
                           const optionValue = typeof option === 'string' ? option : option.value;
                           // Use wanakana for proper romaji conversion if target language is Japanese
-                          const optionRomaji = room?.host_language === 'japanese' ? convertToRomaji(optionValue) : null;
+                          const targetLanguage = room?.game_mode === "practice" ? currentPlayer?.language : room?.host_language;
+                          const optionRomaji = targetLanguage === 'japanese' ? convertToRomaji(optionValue) : null;
                           
                           return (
                             <SoundButton
@@ -3176,6 +3186,7 @@ export default function RoomPage() {
                     </CardHeader>
                     <CardContent className="p-2">
                       <div className="flex flex-col gap-1">
+                        {/* Leaderboard content remains unchanged for now */}
                         {room.players
                           .sort((a, b) => {
                             if (room.game_mode === "cooperation") {
