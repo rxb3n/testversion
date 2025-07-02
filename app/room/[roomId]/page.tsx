@@ -391,27 +391,22 @@ export default function RoomPage() {
   useEffect(() => {
     if (!socket) return;
     const handler = ({ donorName, amount }: { donorName: string; amount: number }) => {
-      // Only extend timer if this player is the current challenge player (active player)
-      if (room?.current_challenge_player === playerId) {
-        if (cooperationTimerRef.current) {
-          setCooperationCountdown((prev: number) => {
-            const newTime = prev + amount;
-            console.log(`⏰ Timer extended: ${prev} + ${amount} = ${newTime}`);
-            return newTime;
-          });
-        }
-        setError(`⏰ ${donorName} donated ${amount} seconds! Timer extended.`);
-        setTimeout(() => setError(null), 3000);
-      } else {
-        setError(`${donorName} donated ${amount} seconds to the active player.`);
-        setTimeout(() => setError(null), 2000);
+      // Extend timer for ALL players for the current turn
+      if (cooperationTimerRef.current) {
+        setCooperationCountdown((prev: number) => {
+          const newTime = prev + amount;
+          console.log(`⏰ Timer extended for all: ${prev} + ${amount} = ${newTime}`);
+          return newTime;
+        });
       }
+      setError(`⏰ ${donorName} donated ${amount} seconds! Timer extended for everyone.`);
+      setTimeout(() => setError(null), 3000);
     };
     socket.on("time-donated", handler);
     return () => {
       socket.off("time-donated", handler);
     };
-  }, [socket, room?.current_challenge_player, playerId]);
+  }, [socket]);
 
   // Handle clocktick sound when current challenge player changes
   useEffect(() => {
