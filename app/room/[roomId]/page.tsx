@@ -42,12 +42,13 @@ import { getLocalizedStrings, Language } from "@/lib/localization";
 import { WORD_DATABASE } from "@/lib/word-database";
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { toRomaji } from 'wanakana';
 
 interface Question {
   questionId: string;
   english: string;
   correctAnswer: string;
-  options: string[];
+  options: { value: string; romaji?: string }[];
   timeLimit: number; // Added time limit
 }
 
@@ -118,6 +119,16 @@ const BACKGROUND_CHARS = {
   chinese: ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '人', '大', '小', '中', '国', '你', '好', '我', '是', '的', '在', '有', '和', '这', '为', '上', '个', '以', '要', '他', '她', '它', '们', '们', '们'],
   korean: ['가', '나', '다', '라', '마', '바', '사', '아', '자', '차', '카', '타', '파', '하', '기', '니', '디', '리', '미', '비', '시', '이', '지', '치', '키', '티', '피', '히', '구', '누', '두', '루', '무', '부', '수'],
   arabic: ['ا', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ك', 'ل', 'م', 'ن', 'ه', 'و', 'ي', 'ة', 'ى', 'ء', 'ئ', 'ؤ', 'إ', 'أ']
+};
+
+// Helper function to convert Japanese text to romaji
+const convertToRomaji = (text: string): string => {
+  try {
+    return toRomaji(text);
+  } catch (error) {
+    // Fallback to original text if conversion fails
+    return text;
+  }
 };
 
 export default function RoomPage() {
@@ -2707,12 +2718,13 @@ export default function RoomPage() {
                     <CardContent className="mobile-padding p-2">
                       <div className="flex flex-col items-center w-full">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl mx-auto">
-                          {currentQuestion.options.map((option, index) => {
-                            // Handle both old string format and new object format
-                            const optionValue = typeof option === 'string' ? option : option.value;
-                            const optionRomaji = typeof option === 'object' && option.romaji ? option.romaji : null;
-                            
-                            return (
+                                                  {currentQuestion.options.map((option, index) => {
+                          // Handle both old string format and new object format
+                          const optionValue = typeof option === 'string' ? option : option.value;
+                          // Use wanakana for proper romaji conversion if target language is Japanese
+                          const optionRomaji = room?.host_language === 'japanese' ? convertToRomaji(optionValue) : null;
+                          
+                          return (
                               <SoundButton
                                 key={index}
                                 onClick={() => handleAnswerSubmit(optionValue)}
@@ -2978,7 +2990,8 @@ export default function RoomPage() {
                         {currentQuestion.options.map((option, index) => {
                           // Handle both old string format and new object format
                           const optionValue = typeof option === 'string' ? option : option.value;
-                          const optionRomaji = typeof option === 'object' && option.romaji ? option.romaji : null;
+                          // Use wanakana for proper romaji conversion if target language is Japanese
+                          const optionRomaji = room?.host_language === 'japanese' ? convertToRomaji(optionValue) : null;
                           
                           return (
                             <SoundButton

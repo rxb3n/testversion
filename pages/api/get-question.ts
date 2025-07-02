@@ -8,6 +8,7 @@ async function loadWords(language: string) {
     german: "words-german.json",
     japanese: "words-japanese.json",
     spanish: "words-spanish.json",
+    russian: "words-russian.json",
   };
   const file = fileMap[language];
   if (!file) return [];
@@ -22,12 +23,13 @@ async function loadWords(language: string) {
 
 // Load all word lists and merge by English word
 async function buildUnifiedDatabase() {
-  const [englishWords, frenchWords, germanWords, japaneseWords, spanishWords] = await Promise.all([
+  const [englishWords, frenchWords, germanWords, japaneseWords, spanishWords, russianWords] = await Promise.all([
     loadWords("english"),
     loadWords("french"),
     loadWords("german"),
     loadWords("japanese"),
     loadWords("spanish"),
+    loadWords("russian"),
   ]);
   // Map by English word for merging
   const map: Record<string, any> = {};
@@ -49,6 +51,10 @@ async function buildUnifiedDatabase() {
   for (const w of spanishWords) {
     if (!map[w.englishWord]) map[w.englishWord] = { english: w.englishWord };
     map[w.englishWord].spanish = w.targetWord;
+  }
+  for (const w of russianWords) {
+    if (!map[w.englishWord]) map[w.englishWord] = { english: w.englishWord };
+    map[w.englishWord].russian = w.targetWord;
   }
   return Object.values(map);
 }
@@ -79,8 +85,8 @@ function shuffle<T>(array: T[]): T[] {
 
 async function generateQuestion(
   db: any[],
-  sourceLanguage: "english" | "french" | "german" | "japanese" | "spanish",
-  targetLanguage: "english" | "french" | "german" | "japanese" | "spanish"
+  sourceLanguage: "english" | "french" | "german" | "japanese" | "spanish" | "russian",
+  targetLanguage: "english" | "french" | "german" | "japanese" | "spanish" | "russian"
 ): Promise<Question> {
   // Select random word
   const randomWord = db[getRandomInt(db.length)];
@@ -132,8 +138,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!sourceLanguage || !targetLanguage) {
       return res.status(400).json({ error: "Source language and target language are required" });
     }
-    if (!["english", "french", "german", "japanese", "spanish"].includes(sourceLanguage) ||
-        !["english", "french", "german", "japanese", "spanish"].includes(targetLanguage)) {
+    if (!["english", "french", "german", "japanese", "spanish", "russian"].includes(sourceLanguage) ||
+        !["english", "french", "german", "japanese", "spanish", "russian"].includes(targetLanguage)) {
       return res.status(400).json({ error: "Invalid language" });
     }
     const db = await buildUnifiedDatabase();
