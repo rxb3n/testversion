@@ -924,7 +924,7 @@ export default function RoomPage() {
             setTimeout(() => loadQuestion(roomRef.current!), 100);
           }
         }, 250);
-      }, 1250);
+      }, 750);
     });
 
     newSocket.on("competition-incorrect-answer", ({ playerId: answerPlayerId, correctAnswer }: { playerId: string; correctAnswer: string }) => {
@@ -950,7 +950,7 @@ export default function RoomPage() {
             setTimeout(() => loadQuestion(roomRef.current!), 100);
           }
         }, 250);
-      }, 1250);
+      }, 750);
     });
 
     newSocket.on("competition-timeout", ({ playerId: timeoutPlayerId }: { playerId: string }) => {
@@ -981,7 +981,7 @@ export default function RoomPage() {
             setTimeout(() => loadQuestion(roomRef.current!), 100);
           }
         }, 250);
-      }, 1250);
+      }, 750);
     });
 
     // Practice feedback events
@@ -1646,7 +1646,7 @@ export default function RoomPage() {
           fadeOut: false
         });
       }
-      // Keep feedback and highlights for 1 second, then load next question
+      // Keep feedback and highlights for 0.75 seconds, then load next question
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = setTimeout(() => {
         setPracticeCompetitionFeedback((fb: typeof practiceCompetitionFeedback | null) => fb ? { ...fb, fadeOut: true } : null);
@@ -1654,7 +1654,7 @@ export default function RoomPage() {
         setCurrentQuestion(null);
         setSelectedAnswer("");
         setIsAnswering(false);
-      }, 1000);
+      }, 750);
       // Emit answer to server with 1 point for correct answers
       socket.emit("answer", {
         roomId,

@@ -59,6 +59,12 @@ async function buildUnifiedDatabase() {
   return Object.values(map);
 }
 
+// Helper function to capitalize first letter
+function capitalizeFirstLetter(word: string): string {
+  if (!word) return word;
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+}
+
 // Simple Romaji conversion (for demo; use a library for production)
 function toRomaji(kana: string): string {
   // This is a placeholder. For real use, integrate 'wanakana' or similar.
@@ -90,8 +96,8 @@ async function generateQuestion(
 ): Promise<Question> {
   // Select random word
   const randomWord = db[getRandomInt(db.length)];
-  const sourceWord = randomWord[sourceLanguage];
-  const correctAnswer = randomWord[targetLanguage];
+  const sourceWord = capitalizeFirstLetter(randomWord[sourceLanguage]);
+  const correctAnswer = capitalizeFirstLetter(randomWord[targetLanguage]);
   if (!sourceWord || !correctAnswer) throw new Error("No translation found");
   // Generate wrong answers
   const wrongAnswers: { value: string; romaji?: string }[] = [];
@@ -100,7 +106,7 @@ async function generateQuestion(
   while (wrongAnswers.length < 3 && attempts < maxAttempts) {
     attempts++;
     const randomWrongWord = db[getRandomInt(db.length)];
-    const wrong = randomWrongWord[targetLanguage];
+    const wrong = capitalizeFirstLetter(randomWrongWord[targetLanguage]);
     if (
       wrong &&
       wrong !== correctAnswer &&
