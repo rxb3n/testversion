@@ -34,7 +34,10 @@ import {
   Timer,
   Star,
   Gamepad2,
-  Settings
+  Settings,
+  AlertTriangle,
+  Swords,
+  MessageSquare
 } from "lucide-react";
 import { io, Socket } from "socket.io-client";
 import { useAudio } from "@/lib/audio";
@@ -124,7 +127,16 @@ const BACKGROUND_CHARS = {
 // Helper function to convert Japanese text to romaji
 const convertToRomaji = (text: string): string => {
   try {
-    return toRomaji(text);
+    // Check if the text contains Japanese characters (hiragana, katakana, kanji)
+    const hasJapaneseChars = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
+    
+    if (hasJapaneseChars) {
+      // Convert Japanese characters to romaji
+      return toRomaji(text);
+    } else {
+      // Text is already in romaji or doesn't contain Japanese characters
+      return text;
+    }
   } catch (error) {
     // Fallback to original text if conversion fails
     return text;
@@ -176,6 +188,10 @@ export default function RoomPage() {
 
   // Practice mode background pulse state
   const [practiceBackgroundPulse, setPracticeBackgroundPulse] = useState<'correct' | 'incorrect' | null>(null);
+  
+  // Practice mode incorrect words tracking
+  const [practiceIncorrectWords, setPracticeIncorrectWords] = useState<Array<{ word: string; translation: string; userAnswer: string }>>([]);
+  const [showIncorrectWords, setShowIncorrectWords] = useState(false);
 
   // Cooperation mode state
   const [cooperationChallenge, setCooperationChallenge] = useState<CooperationChallenge | null>(null);
@@ -1612,15 +1628,21 @@ export default function RoomPage() {
       timerRef.current = null;
     }
     
-    // Handle practice mode differently
-    if (room?.game_mode === "practice") {
-      // Update practice statistics
-      setPracticeWordsAnswered(prev => prev + 1);
-      if (isCorrect) {
-        setPracticeCorrectAnswers(prev => prev + 1);
-      } else {
-        setPracticeIncorrectAnswers(prev => prev + 1);
-      }
+          // Handle practice mode differently
+      if (room?.game_mode === "practice") {
+        // Update practice statistics
+        setPracticeWordsAnswered(prev => prev + 1);
+        if (isCorrect) {
+          setPracticeCorrectAnswers(prev => prev + 1);
+        } else {
+          setPracticeIncorrectAnswers(prev => prev + 1);
+          // Track incorrect words for review
+          setPracticeIncorrectWords(prev => [...prev, {
+            word: currentQuestion.english,
+            translation: currentQuestion.correctAnswer,
+            userAnswer: answer
+          }]);
+        }
       
       // Show feedback immediately on answer
       if (isTimeout) {
@@ -2481,7 +2503,7 @@ export default function RoomPage() {
                           <div className="flex items-center justify-between">
                             <span className="mobile-text-base font-medium text-gray-900">{strings.language}:</span>
                             {isCurrentPlayerHost ? (
-                              <Select value={room.host_language || ""} onValueChange={handleHostLanguageChange}>
+                              <Select key={`host-${room.host_language || 'none'}`} value={room.host_language || ""} onValueChange={handleHostLanguageChange}>
                                 <SelectTrigger className="w-32 border-gray-300 rounded-2xl">
                                   <SelectValue placeholder={strings.chooseLanguage} />
                                 </SelectTrigger>
@@ -2527,7 +2549,7 @@ export default function RoomPage() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="mobile-padding">
-                        <Select value={currentPlayer?.language || ""} onValueChange={handleLanguageChange}>
+                        <Select key={`player-${currentPlayer?.language || 'none'}`} value={currentPlayer?.language || ""} onValueChange={handleLanguageChange}>
                           <SelectTrigger className="w-full border-gray-300 rounded-2xl">
                             <SelectValue placeholder={strings.chooseLanguage} />
                           </SelectTrigger>
@@ -3330,6 +3352,62 @@ export default function RoomPage() {
                   </CardContent>
                 </Card>
               )}
+              
+              {/* Incorrect Words Review Section */}
+              {room.game_mode === "practice" && practiceIncorrectWords.length > 0 && (
+                <Card className="bg-white/90 backdrop-blur-sm border-red-200 shadow-xl mb-8 rounded-3xl">
+                  <CardHeader className="text-center pb-4">
+                    <CardTitle className="flex items-center justify-center gap-2 text-2xl text-red-800">
+                      <AlertTriangle className="h-6 w-6" />
+                      Words to Review
+                      <Badge variant="outline" className="bg-red-100 border-red-300 text-red-800 rounded-full">
+                        {practiceIncorrectWords.length}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-center">
+                        <SoundButton
+                          onClick={() => setShowIncorrectWords(!showIncorrectWords)}
+                          className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2 rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105"
+                        >
+                          {showIncorrectWords ? (
+                            <>
+                              <X className="h-4 w-4 mr-2" />
+                              Hide Mistakes
+                            </>
+                          ) : (
+                            <>
+                              <BookOpen className="h-4 w-4 mr-2" />
+                              Review Mistakes
+                            </>
+                          )}
+                        </SoundButton>
+                      </div>
+                      
+                      {showIncorrectWords && (
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {practiceIncorrectWords.map((item, index) => (
+                            <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl border border-red-200">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="font-semibold text-gray-800">{item.word}</span>
+                                  <span className="text-gray-500">→</span>
+                                  <span className="font-semibold text-green-700">{item.translation}</span>
+                                </div>
+                                <div className="text-sm text-red-600">
+                                  Your answer: <span className="font-medium">{item.userAnswer}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               {room.game_mode !== "practice" && (
                 <Card className="bg-white/90 backdrop-blur-sm border-yellow-200 shadow-xl mb-8 rounded-3xl">
                   <CardHeader className="text-center pb-4">
@@ -3426,19 +3504,73 @@ export default function RoomPage() {
                       </div>
                     )}
                     
-                    {/* Speed Achievement */}
-                    {(() => {
-                      const startTime = new Date(room.created_at);
-                      const endTime = new Date(room.last_activity);
-                      const durationMs = endTime.getTime() - startTime.getTime();
-                      const durationMinutes = durationMs / 60000;
-                      return durationMinutes < 5;
-                    })() && (
-                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-red-100 to-orange-100 rounded-2xl border border-red-200">
-                        <Zap className="h-6 w-6 text-red-600" />
+                    {/* Practice Mode Accuracy Achievement */}
+                    {room.game_mode === "practice" && practiceWordsAnswered >= 10 && practiceAccuracy >= 90 && (
+                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-emerald-100 to-green-100 rounded-2xl border border-emerald-200">
+                        <Target className="h-6 w-6 text-emerald-600" />
                         <div>
-                          <p className="font-semibold text-red-800">Speed Demon</p>
-                          <p className="text-sm text-red-600">Completed in under 5 minutes</p>
+                          <p className="font-semibold text-emerald-800">Sharp Shooter</p>
+                          <p className="text-sm text-emerald-600">90%+ accuracy</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Practice Mode Struggle Achievement */}
+                    {room.game_mode === "practice" && practiceWordsAnswered >= 10 && practiceAccuracy <= 50 && (
+                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-red-100 to-orange-100 rounded-2xl border border-red-200">
+                        <AlertTriangle className="h-6 w-6 text-red-600" />
+                        <div>
+                          <p className="font-semibold text-red-800">Learning Curve</p>
+                          <p className="text-sm text-red-600">Keep practicing!</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Competition Mode Streak Achievement */}
+                    {room.game_mode === "competition" && Math.max(...room.players.map(p => p.score)) >= 50 && (
+                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl border border-purple-200">
+                        <Zap className="h-6 w-6 text-purple-600" />
+                        <div>
+                          <p className="font-semibold text-purple-800">Hot Streak</p>
+                          <p className="text-sm text-purple-600">50+ points scored</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Competition Mode Comeback Achievement */}
+                    {room.game_mode === "competition" && room.players.length >= 2 && (() => {
+                      const sortedPlayers = [...room.players].sort((a, b) => b.score - a.score);
+                      const winner = sortedPlayers[0];
+                      const runnerUp = sortedPlayers[1];
+                      return winner.score >= 30 && runnerUp.score >= 20 && (winner.score - runnerUp.score) <= 10;
+                    })() && (
+                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl border border-blue-200">
+                        <Swords className="h-6 w-6 text-blue-600" />
+                        <div>
+                          <p className="font-semibold text-blue-800">Close Call</p>
+                          <p className="text-sm text-blue-600">Narrow victory</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Cooperation Mode Communication Achievement */}
+                    {room.game_mode === "cooperation" && room.players.length >= 2 && (room.cooperation_score || 0) >= 15 && (
+                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-2xl border border-indigo-200">
+                        <MessageSquare className="h-6 w-6 text-indigo-600" />
+                        <div>
+                          <p className="font-semibold text-indigo-800">Great Communication</p>
+                          <p className="text-sm text-indigo-600">15+ words together</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Cooperation Mode Struggle Achievement */}
+                    {room.game_mode === "cooperation" && room.cooperation_lives === 0 && (
+                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-red-100 to-orange-100 rounded-2xl border border-red-200">
+                        <Heart className="h-6 w-6 text-red-600" />
+                        <div>
+                          <p className="font-semibold text-red-800">Team Effort</p>
+                          <p className="text-sm text-red-600">Used all lives</p>
                         </div>
                       </div>
                     )}
